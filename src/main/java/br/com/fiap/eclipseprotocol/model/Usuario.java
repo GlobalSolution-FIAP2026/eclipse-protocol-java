@@ -35,7 +35,7 @@ public class Usuario {
 
     @Column(name = "DT_CRIACAO", nullable = false, updatable = false)
     @Builder.Default
-    private LocalDateTime criadoEm = LocalDateTime.now();
+    private LocalDateTime dataCriacao = LocalDateTime.now();
 
     @OneToMany(mappedBy = "usuario",
             fetch = FetchType.LAZY,

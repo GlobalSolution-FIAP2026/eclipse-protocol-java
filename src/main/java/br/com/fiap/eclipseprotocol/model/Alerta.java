@@ -41,6 +41,10 @@ public class Alerta {
     @JoinColumn(name = "ID_LEITURA")
     private Leitura leitura;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_PLANTACAO")
+    private Plantacao plantacao;
+
     public enum TipoAlerta {
         TEMP_ALTA, TEMP_BAIXA,
         UMID_ALTA, UMID_BAIXA,
