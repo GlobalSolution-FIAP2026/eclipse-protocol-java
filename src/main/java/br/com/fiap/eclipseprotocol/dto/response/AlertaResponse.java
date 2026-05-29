@@ -11,7 +11,7 @@ public record AlertaResponse(
         String status,
         LocalDateTime dataCriacao,
         Long idLeitura,
-        Long idCultura,
+        Long idPlantacao,
         String cultura
 ) {
     public static AlertaResponse from(Alerta a) {
@@ -22,9 +22,13 @@ public record AlertaResponse(
                 a.getMensagem(),
                 a.getStatus() != null ? a.getStatus().name() : null,
                 a.getDataCriacao(),
-                a.getLeitura().getId(),
-                a.getPlantacao().getId(),
-                a.getPlantacao().getCultura()
+                a.getLeitura() != null ? a.getLeitura().getId() : null,
+                a.getLeitura() != null && a.getLeitura().getSensor() != null && a.getLeitura().getSensor().getPlantacao() != null
+                        ? a.getLeitura().getSensor().getPlantacao().getId()
+                        : null,
+                a.getLeitura() != null && a.getLeitura().getSensor() != null && a.getLeitura().getSensor().getPlantacao() != null
+                        ? a.getLeitura().getSensor().getPlantacao().getCultura()
+                        : null
         );
     }
 }
