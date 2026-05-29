@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Usuario;
 import br.com.fiap.eclipseprotocol.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class UsuarioService {
 
     public Usuario buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
 
     public Usuario salvar(Usuario usuario) {

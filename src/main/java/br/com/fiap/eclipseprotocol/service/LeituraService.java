@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Leitura;
 import br.com.fiap.eclipseprotocol.repository.LeituraRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class LeituraService {
 
     public Leitura buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Leitura não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Leitura não encontrada"));
     }
 
     public Leitura salvar(Leitura leitura) {

@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Plantacao;
 import br.com.fiap.eclipseprotocol.repository.PlantacaoRepository;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class PlantacaoService {
 
     public Plantacao buscarPorId(Long id){
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Plantação não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Plantação não encontrada"));
     }
 
     public Plantacao salvar(Plantacao plantacao){

@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Propriedade;
 import br.com.fiap.eclipseprotocol.repository.PropriedadeRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class PropriedadeService {
 
     public Propriedade buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Propriedade não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Propriedade não encontrada"));
     }
 
     public Propriedade salvar(Propriedade propriedade) {

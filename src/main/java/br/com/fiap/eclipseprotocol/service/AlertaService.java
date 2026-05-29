@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Alerta;
 import br.com.fiap.eclipseprotocol.repository.AlertaRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class AlertaService {
 
     public Alerta buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alerta não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Alerta não encontrado"));
     }
 
     public Alerta salvar(Alerta alerta) {

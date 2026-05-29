@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Sensor;
 import br.com.fiap.eclipseprotocol.repository.SensorRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class SensorService {
 
     public Sensor buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sensor não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sensor não encontrado"));
     }
 
     public Sensor salvar(Sensor sensor) {

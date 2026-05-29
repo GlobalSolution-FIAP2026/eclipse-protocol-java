@@ -1,5 +1,6 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Localizacao;
 import br.com.fiap.eclipseprotocol.repository.LocalizacaoRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class LocalizacaoService {
 
     public Localizacao buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Localização não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Localização não encontrada"));
     }
 
     public Localizacao salvar(Localizacao localizacao) {
