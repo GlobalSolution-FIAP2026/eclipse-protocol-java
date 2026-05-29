@@ -19,35 +19,22 @@ public class Leitura {
     @Column(name = "ID_LEITURA")
     private Long id;
 
-    @Column(name = "DS_TIPO_ALERTA", nullable = false, length = 30)
-    @Enumerated(EnumType.STRING)
-    private TipoAlerta tipoAlerta;
+    @Column(name = "NR_TEMPERATURA")
+    private Double temperatura;
 
-    @Column(name = "DS_SEVERIDADE", nullable = false, length = 10)
-    @Enumerated(EnumType.STRING)
-    private Severidade severidade;
+    @Column(name = "NR_UMIDADE")
+    private Double umidade;
 
-    @Column(name = "DS_MENSAGEM", nullable = false, length = 500)
-    private String mensagem;
+    @Column(name = "NR_PRECIPITACAO")
+    private Double precipitacao;
 
-    @Column(name = "DS_STATUS", nullable = false, length = 15)
-    @Enumerated(EnumType.STRING)
-    private StatusAlerta status;
+    @Column(name = "NR_NDVI")
+    private Double ndvi;
 
-    @Column(name = "DT_CRIACAO", nullable = false, updatable = false)
-    private LocalDateTime dataCriacao;
+    @Column(name = "DT_LEITURA", nullable = false)
+    private LocalDateTime dataLeitura;
 
-    public enum TipoAlerta {
-        TEMP_ALTA, TEMP_BAIXA,
-        UMID_ALTA, UMID_BAIXA,
-        NDVI_CRITICO, PRECIPITACAO_EXCESSIVA
-    }
-
-    public enum Severidade {
-        BAIXA, MEDIA, ALTA, CRITICA
-    }
-
-    public enum StatusAlerta {
-        ABERTO, RECONHECIDO, RESOLVIDO
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_SENSOR")
+    private Sensor sensor;
 }
