@@ -1,0 +1,46 @@
+package br.com.fiap.eclipseprotocol.service;
+
+import br.com.fiap.eclipseprotocol.model.Plantacao;
+import br.com.fiap.eclipseprotocol.repository.PlantacaoRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class PlantacaoService {
+    private final PlantacaoRepository repository;
+
+    public PlantacaoService(PlantacaoRepository repository) {
+        this.repository = repository;
+    }
+
+    public List<Plantacao> listarTodos(){
+        return repository.findAll();
+    }
+
+    public Plantacao buscarPorId(Long id){
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Plantação não encontrada"));
+    }
+
+    public Plantacao salvar(Plantacao plantacao){
+        return repository.save(plantacao);
+    }
+
+    public Plantacao atualizar(Long id, Plantacao plantacaoAtualizada){
+        Plantacao plantacao =  buscarPorId(id);
+
+        plantacao.setNome(plantacaoAtualizada.getNome());
+        plantacao.setCultura(plantacaoAtualizada.getCultura());
+        plantacao.setAreaHectares(plantacaoAtualizada.getAreaHectares());
+        plantacao.setStatus(plantacaoAtualizada.getStatus());
+        plantacao.setPropriedade(plantacaoAtualizada.getPropriedade());
+
+        return repository.save(plantacao);
+    }
+
+    public void remover(Long id) {
+        Plantacao plantacao = buscarPorId(id);
+        repository.delete(plantacao);
+    }
+}
