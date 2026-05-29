@@ -39,7 +39,7 @@ public class PlantacaoService {
         return repository.save(plantacao);
     }
 
-    public void remover(Long id) {
+    public void deletar(Long id) {
         Plantacao plantacao = buscarPorId(id);
         repository.delete(plantacao);
     }
