@@ -28,6 +28,10 @@ public class UsuarioController {
                 .map(UsuarioResponse::from)
                 .toList();
 
+        if (response.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
         return ResponseEntity.ok(response);
     }
 

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -50,6 +51,7 @@ public class LeituraController {
                 .umidade(request.umidade())
                 .precipitacao(request.precipitacao())
                 .ndvi(request.ndvi())
+                .dataLeitura(LocalDateTime.now())
                 .sensor(sensor)
                 .build();
 
@@ -70,6 +72,7 @@ public class LeituraController {
                 .umidade(request.umidade())
                 .precipitacao(request.precipitacao())
                 .ndvi(request.ndvi())
+                .dataLeitura(LocalDateTime.now())
                 .sensor(sensor)
                 .build();
 
