@@ -18,7 +18,7 @@ public class Propriedade {
     @Column(name = "ID_PROPRIEDADE")
     private Long id;
 
-    @Column(name = "NM_PROPRIEADE", nullable = false, length = 100)
+    @Column(name = "NM_PROPRIEDADE", nullable = false, length = 100)
     private String nome;
 
     @Column(name = "NM_PROPRIETARIO", nullable = false, length = 100)
