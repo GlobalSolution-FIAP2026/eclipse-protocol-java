@@ -21,13 +21,21 @@ public class Plantacao {
     @Column(name = "NM_PLANTACAO", nullable = false, length = 100)
     private String nome;
 
-    @Column(name = "DS_CULTURA", nullable = false, length = 100)
+    @Column(name = "TP_CULTURA", nullable = false, length = 80)
     private String cultura;
 
     @Column(name = "NR_AREA_HECTARES", nullable = false)
     private Double areaHectares;
 
-    @Column(name = "DS_LOCALIZACAO", length = 300)
-    private String localizacao;
+    @Column(name = "DS_STATUS", nullable = false, length = 30)
+    private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "ID_PROPRIEDADE",
+            nullable = false,
+        foreignKey = @ForeignKey(name = "FK_PLANTACAO_PROPRIEDADE")
+    )
+    private Propriedade propriedade;
 
 }
