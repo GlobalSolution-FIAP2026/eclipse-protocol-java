@@ -9,6 +9,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import java.util.List;
 
@@ -24,6 +27,11 @@ public class UsuarioController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar registros", description = "Retorna todos os registros cadastrados")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
+    })
     public ResponseEntity<List<UsuarioResponse>> listarTodos() {
         List<UsuarioResponse> response = service.listarTodos()
                 .stream()
@@ -38,12 +46,22 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar por ID", description = "Retorna um registro específico pelo ID informado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Registro encontrado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Registro não encontrado")
+    })
     public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Long id) {
         Usuario usuario = service.buscarPorId(id);
         return ResponseEntity.ok(UsuarioResponse.from(usuario));
     }
 
     @PostMapping
+    @Operation(summary = "Criar registro", description = "Cadastra um novo registro")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Registro criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição")
+    })
     public ResponseEntity<UsuarioResponse> criar(@RequestBody @Valid UsuarioRequest request) {
         Usuario usuario = Usuario.builder()
                 .nome(request.nome())
@@ -57,6 +75,12 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Atualizar registro", description = "Atualiza um registro existente")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Registro atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
+            @ApiResponse(responseCode = "404", description = "Registro não encontrado")
+    })
     public ResponseEntity<UsuarioResponse> atualizar(
             @PathVariable Long id,
             @RequestBody @Valid UsuarioRequest request
@@ -73,6 +97,12 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Deletar registro", description = "Remove um registro pelo ID informado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Registro deletado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Registro não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Registro possui vínculo e não pode ser deletado")
+    })
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();
