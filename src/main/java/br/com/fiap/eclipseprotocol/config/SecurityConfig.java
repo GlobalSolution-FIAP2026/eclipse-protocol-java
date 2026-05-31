@@ -7,11 +7,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import org.springframework.http.HttpMethod;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 
 @Configuration
 public class SecurityConfig {
@@ -29,6 +31,7 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/auth/login"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -48,8 +51,14 @@ public class SecurityConfig {
     @Bean
     public JwtEncoder jwtEncoder() {
         String secret = "eclipseprotocol-global-solution-secret-key-256-bits";
-        SecretKey secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
-        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
+
+        OctetSequenceKey jwk = new OctetSequenceKey.Builder(secret.getBytes())
+                .algorithm(JWSAlgorithm.HS256)
+                .build();
+
+        JWKSet jwkSet = new JWKSet(jwk);
+
+        return new NimbusJwtEncoder(new ImmutableJWKSet<>(jwkSet));
     }
 
 
