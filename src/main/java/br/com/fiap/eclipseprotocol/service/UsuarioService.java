@@ -1,7 +1,9 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.BusinessException;
 import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Usuario;
+import br.com.fiap.eclipseprotocol.repository.PropriedadeRepository;
 import br.com.fiap.eclipseprotocol.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +12,12 @@ import java.util.List;
 @Service
 public class UsuarioService {
     private final UsuarioRepository repository;
+    private final PropriedadeRepository propriedadeRepository;
 
-    public UsuarioService(UsuarioRepository repository) {
+    public UsuarioService(UsuarioRepository repository,
+                          PropriedadeRepository propriedadeRepository) {
         this.repository = repository;
+        this.propriedadeRepository = propriedadeRepository;
     }
 
     public List<Usuario> listarTodos() {
@@ -41,6 +46,13 @@ public class UsuarioService {
 
     public void deletar(Long id) {
         Usuario usuario = buscarPorId(id);
+
+        if (propriedadeRepository.existsByUsuarioId(id)) {
+            throw new BusinessException(
+                    "Não é possível deletar este usuário, pois ele está vinculado a uma propriedade."
+            );
+        }
+
         repository.delete(usuario);
     }
 }

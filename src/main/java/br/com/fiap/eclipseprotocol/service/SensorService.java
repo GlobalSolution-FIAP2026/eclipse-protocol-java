@@ -1,7 +1,9 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.BusinessException;
 import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Sensor;
+import br.com.fiap.eclipseprotocol.repository.LeituraRepository;
 import br.com.fiap.eclipseprotocol.repository.SensorRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +13,12 @@ import java.util.List;
 public class SensorService {
 
     private final SensorRepository repository;
+    private final LeituraRepository leituraRepository;
 
-    public SensorService(SensorRepository repository) {
+    public SensorService(SensorRepository repository,
+                         LeituraRepository leituraRepository) {
         this.repository = repository;
+        this.leituraRepository = leituraRepository;
     }
 
     public List<Sensor> listarTodos() {
@@ -42,6 +47,13 @@ public class SensorService {
 
     public void deletar(Long id) {
         Sensor sensor = buscarPorId(id);
+
+        if (leituraRepository.existsBySensorId(id)) {
+            throw new BusinessException(
+                    "Não é possível deletar este sensor, pois ele está vinculado a uma leitura."
+            );
+        }
+
         repository.delete(sensor);
     }
 }

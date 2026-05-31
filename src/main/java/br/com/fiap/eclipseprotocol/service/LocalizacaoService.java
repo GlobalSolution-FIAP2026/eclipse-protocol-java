@@ -1,8 +1,10 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.BusinessException;
 import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Localizacao;
 import br.com.fiap.eclipseprotocol.repository.LocalizacaoRepository;
+import br.com.fiap.eclipseprotocol.repository.PropriedadeRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,12 +13,17 @@ import java.util.List;
 public class LocalizacaoService {
 
     private final LocalizacaoRepository repository;
+    private final PropriedadeRepository propriedadeRepository;
 
-    public LocalizacaoService(LocalizacaoRepository repository) {
+    public LocalizacaoService(
+            LocalizacaoRepository repository,
+            PropriedadeRepository propriedadeRepository
+    ) {
         this.repository = repository;
+        this.propriedadeRepository = propriedadeRepository;
     }
 
-    public List<Localizacao> listarTodos(){
+    public List<Localizacao> listarTodos() {
         return repository.findAll();
     }
 
@@ -44,6 +51,13 @@ public class LocalizacaoService {
 
     public void deletar(Long id) {
         Localizacao localizacao = buscarPorId(id);
+
+        if (propriedadeRepository.existsByLocalizacaoId(id)) {
+            throw new BusinessException(
+                    "Não é possível deletar esta localização, pois ela está vinculada a uma propriedade."
+            );
+        }
+
         repository.delete(localizacao);
     }
 }

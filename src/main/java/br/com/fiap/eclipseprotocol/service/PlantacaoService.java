@@ -1,8 +1,10 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.BusinessException;
 import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Plantacao;
 import br.com.fiap.eclipseprotocol.repository.PlantacaoRepository;
+import br.com.fiap.eclipseprotocol.repository.SensorRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +12,12 @@ import java.util.List;
 @Service
 public class PlantacaoService {
     private final PlantacaoRepository repository;
+    private final SensorRepository sensorRepository;
 
-    public PlantacaoService(PlantacaoRepository repository) {
+    public PlantacaoService(PlantacaoRepository repository,
+                            SensorRepository sensorRepository) {
         this.repository = repository;
+        this.sensorRepository = sensorRepository;
     }
 
     public List<Plantacao> listarTodos(){
@@ -42,6 +47,13 @@ public class PlantacaoService {
 
     public void deletar(Long id) {
         Plantacao plantacao = buscarPorId(id);
+
+        if (sensorRepository.existsByPlantacaoId(id)) {
+            throw new BusinessException(
+                    "Não é possível deletar esta plantação, pois ela está vinculada a um sensor."
+            );
+        }
+
         repository.delete(plantacao);
     }
 }

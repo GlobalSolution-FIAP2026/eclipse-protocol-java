@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LeituraRepository extends JpaRepository<Leitura, Long> {
+    boolean existsBySensorId(Long id);
 }

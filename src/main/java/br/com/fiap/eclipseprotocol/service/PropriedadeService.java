@@ -1,7 +1,9 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.BusinessException;
 import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Propriedade;
+import br.com.fiap.eclipseprotocol.repository.PlantacaoRepository;
 import br.com.fiap.eclipseprotocol.repository.PropriedadeRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +13,12 @@ import java.util.List;
 public class PropriedadeService {
 
     private final PropriedadeRepository repository;
+    private final PlantacaoRepository  plantacaoRepository;
 
-    public PropriedadeService(PropriedadeRepository repository) {
+    public PropriedadeService(PropriedadeRepository repository,
+                              PlantacaoRepository plantacaoRepository) {
         this.repository = repository;
+        this.plantacaoRepository = plantacaoRepository;
     }
 
     public List<Propriedade> listarTodos() {
@@ -44,6 +49,13 @@ public class PropriedadeService {
 
     public void deletar(Long id) {
         Propriedade propriedade = buscarPorId(id);
+
+        if (plantacaoRepository.existsByPropriedadeId(id)) {
+            throw new BusinessException(
+                    "Não é possível deletar esta propriedade, pois ela está vinculada a uma plantação."
+            );
+        }
+
         repository.delete(propriedade);
     }
 }

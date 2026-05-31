@@ -1,7 +1,9 @@
 package br.com.fiap.eclipseprotocol.service;
 
+import br.com.fiap.eclipseprotocol.exception.BusinessException;
 import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Leitura;
+import br.com.fiap.eclipseprotocol.repository.AlertaRepository;
 import br.com.fiap.eclipseprotocol.repository.LeituraRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +13,12 @@ import java.util.List;
 public class LeituraService {
 
     private final LeituraRepository repository;
+    private final AlertaRepository alertaRepository;
 
-    public LeituraService(LeituraRepository repository) {
+    public LeituraService(LeituraRepository repository,
+                          AlertaRepository alertaRepository) {
         this.repository = repository;
+        this.alertaRepository = alertaRepository;
     }
 
     public List<Leitura> listarTodos() {
@@ -44,6 +49,13 @@ public class LeituraService {
 
     public void deletar(Long id) {
         Leitura leitura = buscarPorId(id);
+
+        if (alertaRepository.existsByLeituraId(id)) {
+            throw new BusinessException(
+                    "Não é possível deletar esta leitura, pois ela está vinculada a um alerta."
+            );
+        }
+
         repository.delete(leitura);
     }
 }
