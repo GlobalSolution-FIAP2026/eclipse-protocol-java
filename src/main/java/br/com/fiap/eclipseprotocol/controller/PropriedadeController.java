@@ -8,6 +8,7 @@ import br.com.fiap.eclipseprotocol.model.Usuario;
 import br.com.fiap.eclipseprotocol.service.LocalizacaoService;
 import br.com.fiap.eclipseprotocol.service.PropriedadeService;
 import br.com.fiap.eclipseprotocol.service.UsuarioService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Propriedades", description = "Gerenciamento das propriedades rurais")
 @RestController
 @RequestMapping("/propriedades")
 public class PropriedadeController {

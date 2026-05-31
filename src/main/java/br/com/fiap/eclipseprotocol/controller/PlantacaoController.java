@@ -6,6 +6,7 @@ import br.com.fiap.eclipseprotocol.model.Plantacao;
 import br.com.fiap.eclipseprotocol.model.Propriedade;
 import br.com.fiap.eclipseprotocol.service.PlantacaoService;
 import br.com.fiap.eclipseprotocol.service.PropriedadeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Plantações", description = "Gerenciamento das plantações monitoradas")
 @RestController
 @RequestMapping("/plantacoes")
 public class PlantacaoController {

@@ -4,6 +4,7 @@ import br.com.fiap.eclipseprotocol.dto.request.UsuarioRequest;
 import br.com.fiap.eclipseprotocol.dto.response.UsuarioResponse;
 import br.com.fiap.eclipseprotocol.model.Usuario;
 import br.com.fiap.eclipseprotocol.service.UsuarioService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Usuários", description = "Gerenciamento de usuários da aplicação")
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioController {

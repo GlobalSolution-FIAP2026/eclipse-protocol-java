@@ -6,6 +6,7 @@ import br.com.fiap.eclipseprotocol.model.Alerta;
 import br.com.fiap.eclipseprotocol.model.Leitura;
 import br.com.fiap.eclipseprotocol.service.AlertaService;
 import br.com.fiap.eclipseprotocol.service.LeituraService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Tag(name = "Alertas", description = "Gerenciamento dos alertas gerados")
 @RestController
 @RequestMapping("/alertas")
 public class AlertaController {

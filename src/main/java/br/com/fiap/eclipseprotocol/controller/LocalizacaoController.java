@@ -4,6 +4,7 @@ import br.com.fiap.eclipseprotocol.dto.request.LocalizacaoRequest;
 import br.com.fiap.eclipseprotocol.dto.response.LocalizacaoResponse;
 import br.com.fiap.eclipseprotocol.model.Localizacao;
 import br.com.fiap.eclipseprotocol.service.LocalizacaoService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Localizações", description = "Gerenciamento das localizações")
 @RestController
 @RequestMapping("/localizacoes")
 public class LocalizacaoController {
