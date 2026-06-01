@@ -1,22 +1,20 @@
 package br.com.fiap.eclipseprotocol.config;
 
+import br.com.fiap.eclipseprotocol.security.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import javax.crypto.spec.SecretKeySpec;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.http.HttpMethod;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 
 @Configuration
 public class SecurityConfig {
+
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    public SecurityConfig(OAuth2SuccessHandler oAuth2SuccessHandler) {
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,10 +27,15 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/h2-console/**",
-                                "/auth/login"
+                                "/auth/login",
+                                "/login/**",
+                                "/oauth2/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2SuccessHandler)
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> {})
@@ -40,26 +43,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        String secret = "eclipseprotocol-global-solution-secret-key-256-bits";
-        SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
-        return NimbusJwtDecoder.withSecretKey(secretKey).build();
-    }
-
-    @Bean
-    public JwtEncoder jwtEncoder() {
-        String secret = "eclipseprotocol-global-solution-secret-key-256-bits";
-
-        OctetSequenceKey jwk = new OctetSequenceKey.Builder(secret.getBytes())
-                .algorithm(JWSAlgorithm.HS256)
-                .build();
-
-        JWKSet jwkSet = new JWKSet(jwk);
-
-        return new NimbusJwtEncoder(new ImmutableJWKSet<>(jwkSet));
-    }
-
-
 }
