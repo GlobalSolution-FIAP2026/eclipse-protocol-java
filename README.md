@@ -33,7 +33,10 @@ A solução permite o gerenciamento de usuários, propriedades rurais, plantaç�
 - ✅ Armazenar leituras de temperatura, umidade, precipitação e NDVI
 - ✅ Gerar alertas baseados em condições críticas
 - ✅ Disponibilizar autenticação segura via JWT
+- ✅ Autenticação OAuth2 com GitHub
 - ✅ Fornecer documentação interativa através do Swagger/OpenAPI
+- ✅ Tratamento global de exceções com respostas padronizadas
+- ✅ Regras de negócio para integridade referencial
 
 ---
 
@@ -47,6 +50,7 @@ A solução permite o gerenciamento de usuários, propriedades rurais, plantaç�
 | Spring Web MVC | — |
 | Spring Data JPA | — |
 | Spring Security | — |
+| Spring Security OAuth2 Client | — |
 | OAuth2 Resource Server | — |
 | JWT (Nimbus JOSE) | — |
 | Lombok | — |
@@ -77,10 +81,11 @@ A solução permite o gerenciamento de usuários, propriedades rurais, plantaç�
 ```
 src/main/java/br/com/fiap/eclipseprotocol/
 ├── config/
-│   ├── OpenApiConfig.java         # Configuração Swagger/OpenAPI
-│   └── SecurityConfig.java        # Configuração Spring Security + JWT
+│   ├── JwtConfig.java                 # Configuração do bean JWT (chave secreta)
+│   ├── OpenApiConfig.java             # Configuração Swagger/OpenAPI com suporte JWT
+│   └── SecurityConfig.java            # Configuração Spring Security + JWT + OAuth2
 ├── controller/
-│   ├── AuthController.java        # Autenticação (login / geração de token)
+│   ├── AuthController.java            # Autenticação (login / geração de token)
 │   ├── AlertaController.java
 │   ├── LeituraController.java
 │   ├── LocalizacaoController.java
@@ -89,13 +94,13 @@ src/main/java/br/com/fiap/eclipseprotocol/
 │   ├── SensorController.java
 │   └── UsuarioController.java
 ├── dto/
-│   ├── request/                   # DTOs de entrada (Request)
-│   └── response/                  # DTOs de saída (Response)
+│   ├── request/                       # DTOs de entrada (Request)
+│   └── response/                      # DTOs de saída (Response)
 ├── exception/
-│   ├── BusinessException.java
-│   ├── ErrorResponse.java
-│   ├── GlobalExceptionHandler.java
-│   └── ResourceNotFoundException.java
+│   ├── BusinessException.java         # Exceção para regras de negócio
+│   ├── ErrorResponse.java             # Formato padronizado de erro
+│   ├── GlobalExceptionHandler.java    # Handler global de exceções
+│   └── ResourceNotFoundException.java # Exceção para recurso não encontrado
 ├── model/
 │   ├── Alerta.java
 │   ├── Leitura.java
@@ -104,9 +109,18 @@ src/main/java/br/com/fiap/eclipseprotocol/
 │   ├── Propriedade.java
 │   ├── Sensor.java
 │   └── Usuario.java
-├── repository/                    # Interfaces JPA Repository
-├── service/                       # Regras de negócio
-│   └── TokenService.java          # Geração e validação de JWT
+├── repository/                        # Interfaces JPA Repository
+├── security/
+│   └── OAuth2SuccessHandler.java      # Handler de sucesso OAuth2 → geração de JWT
+├── service/
+│   ├── AlertaService.java
+│   ├── LeituraService.java
+│   ├── LocalizacaoService.java
+│   ├── PlantacaoService.java
+│   ├── PropriedadeService.java
+│   ├── SensorService.java
+│   ├── TokenService.java              # Geração e validação de JWT
+│   └── UsuarioService.java
 └── EclipseProtocolApplication.java
 ```
 
@@ -203,18 +217,26 @@ A API utiliza **JWT (JSON Web Token)** com algoritmo **HS256** via Spring Securi
 ### Rotas públicas (sem autenticação)
 | Método | Endpoint | Descrição |
 |---|---|---|
-| POST | `/auth/login` | Gera token JWT |
+| POST | `/auth/login` | Gera token JWT via email/senha |
 | POST | `/usuarios` | Cria novo usuário |
 | GET | `/swagger-ui/**` | Documentação Swagger |
+| GET | `/v3/api-docs/**` | OpenAPI Docs |
 | GET | `/h2-console/**` | Console H2 |
+| GET | `/oauth2/**` | Login via GitHub |
 
 > Todas as demais rotas exigem o header `Authorization: Bearer <token>`
 
-### Exemplo de login
+---
+
+### 🔑 Autenticação via Email e Senha
+
+Fluxo principal recomendado, especialmente para integração com o aplicativo mobile.
+
+**1. Realizar login:**
 ```http
 POST /auth/login
-```
-```json
+Content-Type: application/json
+
 {
   "email": "usuario@email.com",
   "senha": "senha123"
@@ -229,21 +251,102 @@ POST /auth/login
 }
 ```
 
+**2. Usar o token nas requisições protegidas:**
+```http
+GET /propriedades
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+```
+
+---
+
+### 🐙 Autenticação via GitHub (OAuth2)
+
+O projeto também suporta login social com GitHub como opção complementar.
+
+**Fluxo implementado:**
+```
+Usuário → GitHub OAuth2 → Spring Security → OAuth2SuccessHandler → JWT próprio da API → Acesso aos recursos
+```
+
+> ⚠️ As credenciais OAuth2 não são armazenadas no código-fonte. São lidas a partir de variáveis de ambiente:
+> - `GITHUB_CLIENT_ID`
+> - `GITHUB_CLIENT_SECRET`
+
+Para configurar localmente, utilize o arquivo `application-example.properties` como referência e defina as variáveis de ambiente no seu sistema ou IDE.
+
+---
+
+## 🤝 Integração Mobile
+
+O fluxo recomendado para o aplicativo mobile é:
+
+```
+1. POST /auth/login  →  Enviar email e senha
+2. Receber token JWT na resposta
+3. Armazenar o token localmente no dispositivo
+4. Enviar o token em todas as requisições via header:
+   Authorization: Bearer <TOKEN>
+```
+
+> O login via GitHub está disponível e poderá ser integrado futuramente ao aplicativo mobile como opção adicional de autenticação.
+
+---
+
+## 📖 Swagger — Testando Endpoints Protegidos
+
+A documentação Swagger está configurada com suporte à autenticação JWT.
+
+**Passos:**
+1. Acesse: **http://localhost:8080/swagger-ui/index.html**
+2. Execute `POST /auth/login` para obter o token
+3. Clique no botão **Authorize** 🔒
+4. Insira o valor: `Bearer <seu_token>`
+5. Confirme e teste os endpoints protegidos normalmente
+
+---
+
+## ⚠️ Tratamento de Exceções
+
+O projeto implementa tratamento global de exceções via `GlobalExceptionHandler`, retornando respostas padronizadas:
+
+| Status | Descrição |
+|---|---|
+| `400 Bad Request` | Dados inválidos na requisição |
+| `401 Unauthorized` | Token ausente, inválido ou expirado |
+| `404 Not Found` | Recurso não encontrado (`ResourceNotFoundException`) |
+| `409 Conflict` | Violação de regra de negócio (`BusinessException`) |
+| `500 Internal Server Error` | Erros inesperados no servidor |
+
+---
+
+## 📏 Regras de Negócio
+
+O sistema impede a exclusão de entidades que possuam relacionamentos ativos, garantindo a integridade dos dados:
+
+| Entidade | Restrição de exclusão |
+|---|---|
+| Usuário | Não pode ser excluído se vinculado a uma propriedade |
+| Localização | Não pode ser excluída se vinculada a uma propriedade |
+| Propriedade | Não pode ser excluída se vinculada a plantações |
+| Plantação | Não pode ser excluída se vinculada a sensores |
+| Sensor | Não pode ser excluído se vinculado a leituras |
+| Leitura | Não pode ser excluída se vinculada a alertas |
+
 ---
 
 ## 🌐 Endpoints da API
 
 ### Autenticação
 | Método | Endpoint | Descrição | Auth |
-|---|---|---|---|
-| POST | `/auth/login` | Realiza login e retorna token JWT | ❌ |
+|---|---|---|--|
+| POST | `/auth/login` | Realiza login e retorna token JWT | ✅ |
 
 ### Usuários
 | Método | Endpoint | Descrição | Auth |
-|---|---|---|---|
+|---|---|---|--|
 | GET | `/usuarios` | Lista todos os usuários | ✅ |
 | GET | `/usuarios/{id}` | Busca usuário por ID | ✅ |
-| POST | `/usuarios` | Cria novo usuário | ❌ |
+| POST | `/usuarios` | Cria novo usuário | ✅ |
 | PUT | `/usuarios/{id}` | Atualiza usuário | ✅ |
 | DELETE | `/usuarios/{id}` | Remove usuário | ✅ |
 
@@ -308,6 +411,11 @@ POST /auth/login
 ### Pré-requisitos
 - Java 17+
 - Maven 3.8+
+- Variáveis de ambiente configuradas (necessário para OAuth2 com GitHub):
+  - `GITHUB_CLIENT_ID`
+  - `GITHUB_CLIENT_SECRET`
+
+> Consulte o arquivo `application-example.properties` na raiz do projeto para referência de configuração.
 
 ### Passos
 
@@ -334,6 +442,7 @@ A aplicação estará disponível em: **http://localhost:8080**
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
 | OpenAPI Docs | http://localhost:8080/v3/api-docs |
 | H2 Console | http://localhost:8080/h2-console |
+| Login GitHub | http://localhost:8080/oauth2/authorization/github |
 
 ### Configuração H2 Console
 | Campo | Valor |
@@ -383,4 +492,4 @@ Importe o arquivo `EclipseProtocol.postman_collection.json` disponível na raiz 
 
 ## 📄 Licença
 
-Projeto acadêmico desenvolvido para a disciplina de **Enterprise Application Development** — FIAP 2026.
+Projeto acadêmico desenvolvido para a disciplina de **Análise de Desenvolvimento de Sistemas I.A** — FIAP 2026.
