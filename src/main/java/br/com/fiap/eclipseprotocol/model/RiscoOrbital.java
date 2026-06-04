@@ -1,0 +1,52 @@
+package br.com.fiap.eclipseprotocol.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "TB_RISCO_ORBITAL")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RiscoOrbital {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_RISCO_ORBITAL")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "ID_SATELITE",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_RISCO_SATELITE")
+    )
+    private Satelite satelite;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "ID_LIXO_ESPACIAL",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_RISCO_LIXO_ESPACIAL")
+    )
+    private LixoEspacial lixoEspacial;
+
+    @Column(name = "DS_NIVEL_RISCO", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private NivelRisco nivelRisco;
+
+    @Column(name = "DS_DESCRICAO_RISCO", length = 500)
+    private String descricaoRisco;
+
+    @Column(name = "DT_ANALISE", nullable = false)
+    private LocalDateTime dataAnalise;
+
+    public enum NivelRisco {
+        BAIXO, MODERADO, ALTO, CRITICO
+    }
+}
+
