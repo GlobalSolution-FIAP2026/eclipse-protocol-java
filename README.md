@@ -1,6 +1,6 @@
 # 🌿 Eclipse Protocol
 
-> Plataforma de monitoramento inteligente para o agronegócio via sensores IoT
+> Plataforma de monitoramento inteligente para o agronegócio via sensores IoT e camada espacial de satélites
 
 ---
 
@@ -24,6 +24,8 @@ O **Eclipse Protocol** é uma plataforma de monitoramento inteligente para o agr
 
 A solução permite o gerenciamento de usuários, propriedades rurais, plantações, sensores, leituras ambientais e alertas, centralizando informações importantes para apoiar a **tomada de decisão no campo**.
 
+Além da camada IoT, o projeto conta com uma **camada espacial** que gerencia satélites, imagens de satélite, lixo espacial e riscos orbitais, preparada para futuras integrações com **Copernicus, Sentinel, NDVI e Oracle Graph**.
+
 ---
 
 ## 🎯 Objetivos
@@ -37,6 +39,10 @@ A solução permite o gerenciamento de usuários, propriedades rurais, plantaç�
 - ✅ Fornecer documentação interativa através do Swagger/OpenAPI
 - ✅ Tratamento global de exceções com respostas padronizadas
 - ✅ Regras de negócio para integridade referencial
+- ✅ Navegação HATEOAS em todos os recursos REST
+- ✅ Gerenciar satélites e suas imagens capturadas
+- ✅ Rastrear objetos de lixo espacial
+- ✅ Analisar riscos orbitais entre satélites e lixo espacial
 
 ---
 
@@ -53,6 +59,7 @@ A solução permite o gerenciamento de usuários, propriedades rurais, plantaç�
 | Spring Security OAuth2 Client | — |
 | OAuth2 Resource Server | — |
 | JWT (Nimbus JOSE) | — |
+| Spring HATEOAS | — |
 | Lombok | — |
 | Bean Validation | — |
 
@@ -81,26 +88,30 @@ A solução permite o gerenciamento de usuários, propriedades rurais, plantaç�
 ```
 src/main/java/br/com/fiap/eclipseprotocol/
 ├── config/
-│   ├── JwtConfig.java                 # Configuração do bean JWT (chave secreta)
-│   ├── OpenApiConfig.java             # Configuração Swagger/OpenAPI com suporte JWT
-│   └── SecurityConfig.java            # Configuração Spring Security + JWT + OAuth2
+│   ├── JwtConfig.java                      # Configuração do bean JWT (chave secreta)
+│   ├── OpenApiConfig.java                  # Configuração Swagger/OpenAPI com suporte JWT
+│   └── SecurityConfig.java                 # Configuração Spring Security + JWT + OAuth2
 ├── controller/
-│   ├── AuthController.java            # Autenticação (login / geração de token)
+│   ├── AuthController.java                 # Autenticação (login / geração de token)
 │   ├── AlertaController.java
 │   ├── LeituraController.java
 │   ├── LocalizacaoController.java
 │   ├── PlantacaoController.java
 │   ├── PropriedadeController.java
 │   ├── SensorController.java
-│   └── UsuarioController.java
+│   ├── UsuarioController.java
+│   ├── SateliteController.java             # [NOVO] Camada espacial
+│   ├── ImagemSateliteController.java       # [NOVO] Camada espacial
+│   ├── LixoEspacialController.java         # [NOVO] Camada espacial
+│   └── RiscoOrbitalController.java         # [NOVO] Camada espacial
 ├── dto/
-│   ├── request/                       # DTOs de entrada (Request)
-│   └── response/                      # DTOs de saída (Response)
+│   ├── request/                            # DTOs de entrada (Request)
+│   └── response/                          # DTOs de saída (Response) — extends RepresentationModel (HATEOAS)
 ├── exception/
-│   ├── BusinessException.java         # Exceção para regras de negócio
-│   ├── ErrorResponse.java             # Formato padronizado de erro
-│   ├── GlobalExceptionHandler.java    # Handler global de exceções
-│   └── ResourceNotFoundException.java # Exceção para recurso não encontrado
+│   ├── BusinessException.java             # Exceção para regras de negócio
+│   ├── ErrorResponse.java                 # Formato padronizado de erro
+│   ├── GlobalExceptionHandler.java        # Handler global de exceções
+│   └── ResourceNotFoundException.java    # Exceção para recurso não encontrado
 ├── model/
 │   ├── Alerta.java
 │   ├── Leitura.java
@@ -108,10 +119,14 @@ src/main/java/br/com/fiap/eclipseprotocol/
 │   ├── Plantacao.java
 │   ├── Propriedade.java
 │   ├── Sensor.java
-│   └── Usuario.java
-├── repository/                        # Interfaces JPA Repository
+│   ├── Usuario.java
+│   ├── Satelite.java                      # [NOVO] Camada espacial
+│   ├── ImagemSatelite.java                # [NOVO] Camada espacial
+│   ├── LixoEspacial.java                  # [NOVO] Camada espacial
+│   └── RiscoOrbital.java                  # [NOVO] Camada espacial
+├── repository/                            # Interfaces JPA Repository
 ├── security/
-│   └── OAuth2SuccessHandler.java      # Handler de sucesso OAuth2 → geração de JWT
+│   └── OAuth2SuccessHandler.java          # Handler de sucesso OAuth2 → geração de JWT
 ├── service/
 │   ├── AlertaService.java
 │   ├── LeituraService.java
@@ -119,8 +134,12 @@ src/main/java/br/com/fiap/eclipseprotocol/
 │   ├── PlantacaoService.java
 │   ├── PropriedadeService.java
 │   ├── SensorService.java
-│   ├── TokenService.java              # Geração e validação de JWT
-│   └── UsuarioService.java
+│   ├── TokenService.java                  # Geração e validação de JWT
+│   ├── UsuarioService.java
+│   ├── SateliteService.java               # [NOVO] Camada espacial
+│   ├── ImagemSateliteService.java         # [NOVO] Camada espacial
+│   ├── LixoEspacialService.java           # [NOVO] Camada espacial
+│   └── RiscoOrbitalService.java           # [NOVO] Camada espacial
 └── EclipseProtocolApplication.java
 ```
 
@@ -207,6 +226,109 @@ src/main/java/br/com/fiap/eclipseprotocol/
 | TipoAlerta | `TEMP_ALTA`, `TEMP_BAIXA`, `UMID_ALTA`, `UMID_BAIXA`, `NDVI_CRITICO`, `PRECIPITACAO_EXCESSIVA` |
 | Severidade | `BAIXA`, `MEDIA`, `ALTA`, `CRITICA` |
 | StatusAlerta | `ABERTO`, `RECONHECIDO`, `RESOLVIDO` |
+
+---
+
+### 🛰️ Satelite *(Camada Espacial)*
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | Long | Identificador único |
+| nome | String | Nome do satélite |
+| tipo | String | Tipo do satélite |
+| orbita | String | Tipo de órbita |
+| altitudeKm | Double | Altitude em km |
+| status | Enum | Status operacional |
+| dataLancamento | LocalDate | Data de lançamento |
+
+#### Enum StatusSatelite
+| Valor | Descrição |
+|---|---|
+| `ATIVO` | Satélite em operação |
+| `INATIVO` | Satélite fora de operação |
+| `DESCOMISSIONADO` | Satélite desativado permanentemente |
+
+---
+
+### 🖼️ ImagemSatelite *(Camada Espacial)*
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | Long | Identificador único |
+| satelite | Satelite | FK satélite (N:1) |
+| plantacao | Plantacao | FK plantação (N:1) |
+| urlImagem | String | URL da imagem capturada |
+| ndvi | Double | Índice NDVI da imagem |
+| coberturaNuvem | Double | % de cobertura de nuvens |
+| dataCaptura | LocalDateTime | Data/hora da captura |
+
+---
+
+### 🗑️ LixoEspacial *(Camada Espacial)*
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | Long | Identificador único |
+| nomeObjeto | String | Nome/identificação do objeto |
+| tipoObjeto | String | Tipo do objeto |
+| altitudeKm | Double | Altitude em km |
+| velocidadeKmh | Double | Velocidade em km/h |
+| orbita | String | Órbita do objeto |
+| dataIdentificacao | LocalDate | Data de identificação |
+
+---
+
+### ⚠️ RiscoOrbital *(Camada Espacial)*
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | Long | Identificador único |
+| satelite | Satelite | FK satélite (N:1) |
+| lixoEspacial | LixoEspacial | FK lixo espacial (N:1) |
+| nivelRisco | Enum | Nível de risco identificado |
+| descricaoRisco | String | Descrição detalhada do risco |
+| dataAnalise | LocalDateTime | Data/hora da análise |
+
+#### Enum NivelRisco
+| Valor | Descrição |
+|---|---|
+| `BAIXO` | Risco baixo |
+| `MODERADO` | Risco moderado |
+| `ALTO` | Risco alto |
+| `CRITICO` | Risco crítico |
+
+---
+
+## 🔗 HATEOAS
+
+Todos os endpoints de recursos retornam links de navegação hypermedia no campo `_links`:
+
+```json
+{
+  "id": 1,
+  "nome": "Sentinel-2",
+  "_links": {
+    "self":    { "href": "http://localhost:8080/satelites/1" },
+    "todos":   { "href": "http://localhost:8080/satelites" },
+    "deletar": { "href": "http://localhost:8080/satelites/1" }
+  }
+}
+```
+
+Listagens retornam `CollectionModel` com `_embedded` e `_links`. O nome da chave dentro de `_embedded` é gerado automaticamente pelo Spring HATEOAS a partir do nome da classe Response:
+
+```json
+{
+  "_embedded": {
+    "sateliteResponseList": [],
+    "imagemSateliteResponseList": [],
+    "lixoEspacialResponseList": [],
+    "riscoOrbitalResponseList": [],
+    "alertaResponseList": []
+  },
+  "_links": {
+    "self": { "href": "http://localhost:8080/satelites" }
+  }
+}
+```
+
+> 💡 O padrão do nome é: `<nomeClasseResponse>List` (ex: `SateliteResponse` → `sateliteResponseList`)
 
 ---
 
@@ -331,6 +453,8 @@ O sistema impede a exclusão de entidades que possuam relacionamentos ativos, ga
 | Plantação | Não pode ser excluída se vinculada a sensores |
 | Sensor | Não pode ser excluído se vinculado a leituras |
 | Leitura | Não pode ser excluída se vinculada a alertas |
+| Satélite | Não pode ser excluído se vinculado a imagens ou riscos orbitais |
+| Lixo Espacial | Não pode ser excluído se vinculado a riscos orbitais |
 
 ---
 
@@ -404,6 +528,42 @@ O sistema impede a exclusão de entidades que possuam relacionamentos ativos, ga
 | PUT | `/alertas/{id}` | Atualiza alerta | ✅ |
 | DELETE | `/alertas/{id}` | Remove alerta | ✅ |
 
+### Satélites *(Camada Espacial)*
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| GET | `/satelites` | Lista todos os satélites | ✅ |
+| GET | `/satelites/{id}` | Busca satélite por ID | ✅ |
+| POST | `/satelites` | Cadastra novo satélite | ✅ |
+| PUT | `/satelites/{id}` | Atualiza satélite | ✅ |
+| DELETE | `/satelites/{id}` | Remove satélite | ✅ |
+
+### Imagens de Satélite *(Camada Espacial)*
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| GET | `/imagens-satelite` | Lista todas as imagens | ✅ |
+| GET | `/imagens-satelite/{id}` | Busca imagem por ID | ✅ |
+| POST | `/imagens-satelite` | Registra nova imagem | ✅ |
+| PUT | `/imagens-satelite/{id}` | Atualiza imagem | ✅ |
+| DELETE | `/imagens-satelite/{id}` | Remove imagem | ✅ |
+
+### Lixo Espacial *(Camada Espacial)*
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| GET | `/lixo-espacial` | Lista todos os objetos | ✅ |
+| GET | `/lixo-espacial/{id}` | Busca objeto por ID | ✅ |
+| POST | `/lixo-espacial` | Registra novo objeto | ✅ |
+| PUT | `/lixo-espacial/{id}` | Atualiza objeto | ✅ |
+| DELETE | `/lixo-espacial/{id}` | Remove objeto | ✅ |
+
+### Riscos Orbitais *(Camada Espacial)*
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| GET | `/riscos-orbitais` | Lista todos os riscos | ✅ |
+| GET | `/riscos-orbitais/{id}` | Busca risco por ID | ✅ |
+| POST | `/riscos-orbitais` | Registra novo risco | ✅ |
+| PUT | `/riscos-orbitais/{id}` | Atualiza risco | ✅ |
+| DELETE | `/riscos-orbitais/{id}` | Remove risco | ✅ |
+
 ---
 
 ## ▶️ Como Executar
@@ -458,15 +618,25 @@ A aplicação estará disponível em: **http://localhost:8080**
 Importe o arquivo `EclipseProtocol.postman_collection.json` disponível na raiz do projeto.
 
 ### Ordem recomendada para os testes
+
+**Camada IoT:**
 ```
-1. POST /usuarios          → Cadastrar usuário
-2. POST /auth/login        → Obter token JWT
-3. POST /localizacoes      → Criar localização
-4. POST /propriedades      → Criar propriedade (usa idUsuario + idLocalizacao)
-5. POST /plantacoes        → Criar plantação (usa idPropriedade)
-6. POST /sensores          → Criar sensor (usa idPlantacao)
-7. POST /leituras          → Registrar leitura (usa idSensor)
-8. POST /alertas           → Criar alerta (usa idLeitura + idPlantacao)
+1. POST /usuarios              → Cadastrar usuário
+2. POST /auth/login            → Obter token JWT
+3. POST /localizacoes          → Criar localização
+4. POST /propriedades          → Criar propriedade (usa idUsuario + idLocalizacao)
+5. POST /plantacoes            → Criar plantação (usa idPropriedade)
+6. POST /sensores              → Criar sensor (usa idPlantacao)
+7. POST /leituras              → Registrar leitura (usa idSensor)
+8. POST /alertas               → Criar alerta (usa idLeitura + idPlantacao)
+```
+
+**Camada Espacial:**
+```
+9.  POST /satelites            → Cadastrar satélite
+10. POST /lixo-espacial        → Registrar objeto de lixo espacial
+11. POST /imagens-satelite     → Registrar imagem (usa idSatelite + idPlantacao)
+12. POST /riscos-orbitais      → Registrar risco (usa idSatelite + idLixoEspacial)
 ```
 
 > ⚠️ Após o login, adicione o token JWT no header de todas as requisições protegidas:
@@ -485,8 +655,25 @@ Importe o arquivo `EclipseProtocol.postman_collection.json` disponível na raiz 
 | TB_SENSOR | Sensor |
 | TB_LEITURA | Leitura |
 | TB_ALERTA | Alerta |
+| TB_SATELITE | Satelite |
+| TB_IMAGEM_SATELITE | ImagemSatelite |
+| TB_LIXO_ESPACIAL | LixoEspacial |
+| TB_RISCO_ORBITAL | RiscoOrbital |
 
 > O banco H2 é criado em memória a cada inicialização (`ddl-auto=create-drop`).
+
+---
+
+## 🚀 Próximas Integrações Previstas
+
+A camada espacial foi desenvolvida para suportar futuras integrações com:
+
+| Integração | Descrição |
+|---|---|
+| **Copernicus** | Dados de observação da Terra da ESA |
+| **Sentinel** | Imagens de satélite de alta resolução |
+| **NDVI API** | Índices de vegetação em tempo real |
+| **Oracle Graph** | Análise de relacionamentos entre objetos espaciais |
 
 ---
 
