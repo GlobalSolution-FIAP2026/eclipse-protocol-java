@@ -8,16 +8,19 @@ import br.com.fiap.eclipseprotocol.model.Usuario;
 import br.com.fiap.eclipseprotocol.service.LocalizacaoService;
 import br.com.fiap.eclipseprotocol.service.PropriedadeService;
 import br.com.fiap.eclipseprotocol.service.UsuarioService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Propriedades", description = "Gerenciamento das propriedades rurais")
 @RestController
@@ -28,11 +31,7 @@ public class PropriedadeController {
     private final LocalizacaoService localizacaoService;
     private final UsuarioService usuarioService;
 
-    public PropriedadeController(
-            PropriedadeService propriedadeService,
-            LocalizacaoService localizacaoService,
-            UsuarioService usuarioService
-    ) {
+    public PropriedadeController(PropriedadeService propriedadeService, LocalizacaoService localizacaoService, UsuarioService usuarioService) {
         this.propriedadeService = propriedadeService;
         this.localizacaoService = localizacaoService;
         this.usuarioService = usuarioService;
@@ -44,13 +43,20 @@ public class PropriedadeController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<PropriedadeResponse>> listarTodos() {
-        List<PropriedadeResponse> response = propriedadeService.listarTodos()
+    public ResponseEntity<CollectionModel<PropriedadeResponse>> listarTodos() {
+        List<PropriedadeResponse> lista = propriedadeService.listarTodos()
                 .stream()
-                .map(PropriedadeResponse::from)
+                .map(propriedade -> {
+                    PropriedadeResponse response = PropriedadeResponse.from(propriedade);
+                    response.add(linkTo(methodOn(PropriedadeController.class).buscarPorId(propriedade.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        return ResponseEntity.ok(response);
+        CollectionModel<PropriedadeResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(PropriedadeController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -61,7 +67,11 @@ public class PropriedadeController {
     })
     public ResponseEntity<PropriedadeResponse> buscarPorId(@PathVariable Long id) {
         Propriedade propriedade = propriedadeService.buscarPorId(id);
-        return ResponseEntity.ok(PropriedadeResponse.from(propriedade));
+        PropriedadeResponse response = PropriedadeResponse.from(propriedade);
+        response.add(linkTo(methodOn(PropriedadeController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(PropriedadeController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(PropriedadeController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -84,8 +94,10 @@ public class PropriedadeController {
                 .build();
 
         Propriedade salva = propriedadeService.salvar(propriedade);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(PropriedadeResponse.from(salva));
+        PropriedadeResponse response = PropriedadeResponse.from(salva);
+        response.add(linkTo(methodOn(PropriedadeController.class).buscarPorId(salva.getId())).withSelfRel());
+        response.add(linkTo(methodOn(PropriedadeController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -95,10 +107,7 @@ public class PropriedadeController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<PropriedadeResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid PropriedadeRequest request
-    ) {
+    public ResponseEntity<PropriedadeResponse> atualizar(@PathVariable Long id, @RequestBody @Valid PropriedadeRequest request) {
         Localizacao localizacao = localizacaoService.buscarPorId(request.idLocalizacao());
         Usuario usuario = usuarioService.buscarPorId(request.idUsuario());
 
@@ -112,8 +121,10 @@ public class PropriedadeController {
                 .build();
 
         Propriedade atualizada = propriedadeService.atualizar(id, propriedadeAtualizada);
-
-        return ResponseEntity.ok(PropriedadeResponse.from(atualizada));
+        PropriedadeResponse response = PropriedadeResponse.from(atualizada);
+        response.add(linkTo(methodOn(PropriedadeController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(PropriedadeController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

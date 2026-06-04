@@ -6,17 +6,20 @@ import br.com.fiap.eclipseprotocol.model.Leitura;
 import br.com.fiap.eclipseprotocol.model.Sensor;
 import br.com.fiap.eclipseprotocol.service.LeituraService;
 import br.com.fiap.eclipseprotocol.service.SensorService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Leituras", description = "Gerenciamento das leituras dos sensores")
 @RestController
@@ -37,13 +40,20 @@ public class LeituraController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<LeituraResponse>> listarTodos() {
-        List<LeituraResponse> response = leituraService.listarTodos()
+    public ResponseEntity<CollectionModel<LeituraResponse>> listarTodos() {
+        List<LeituraResponse> lista = leituraService.listarTodos()
                 .stream()
-                .map(LeituraResponse::from)
+                .map(leitura -> {
+                    LeituraResponse response = LeituraResponse.from(leitura);
+                    response.add(linkTo(methodOn(LeituraController.class).buscarPorId(leitura.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        return ResponseEntity.ok(response);
+        CollectionModel<LeituraResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(LeituraController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -54,7 +64,11 @@ public class LeituraController {
     })
     public ResponseEntity<LeituraResponse> buscarPorId(@PathVariable Long id) {
         Leitura leitura = leituraService.buscarPorId(id);
-        return ResponseEntity.ok(LeituraResponse.from(leitura));
+        LeituraResponse response = LeituraResponse.from(leitura);
+        response.add(linkTo(methodOn(LeituraController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(LeituraController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(LeituraController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -76,8 +90,10 @@ public class LeituraController {
                 .build();
 
         Leitura salva = leituraService.salvar(leitura);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(LeituraResponse.from(salva));
+        LeituraResponse response = LeituraResponse.from(salva);
+        response.add(linkTo(methodOn(LeituraController.class).buscarPorId(salva.getId())).withSelfRel());
+        response.add(linkTo(methodOn(LeituraController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -87,10 +103,7 @@ public class LeituraController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<LeituraResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid LeituraRequest request
-    ) {
+    public ResponseEntity<LeituraResponse> atualizar(@PathVariable Long id, @RequestBody @Valid LeituraRequest request) {
         Sensor sensor = sensorService.buscarPorId(request.sensor());
 
         Leitura leituraAtualizada = Leitura.builder()
@@ -103,8 +116,10 @@ public class LeituraController {
                 .build();
 
         Leitura atualizada = leituraService.atualizar(id, leituraAtualizada);
-
-        return ResponseEntity.ok(LeituraResponse.from(atualizada));
+        LeituraResponse response = LeituraResponse.from(atualizada);
+        response.add(linkTo(methodOn(LeituraController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(LeituraController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

@@ -6,17 +6,20 @@ import br.com.fiap.eclipseprotocol.model.Alerta;
 import br.com.fiap.eclipseprotocol.model.Leitura;
 import br.com.fiap.eclipseprotocol.service.AlertaService;
 import br.com.fiap.eclipseprotocol.service.LeituraService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Alertas", description = "Gerenciamento dos alertas gerados")
 @RestController
@@ -37,13 +40,20 @@ public class AlertaController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<AlertaResponse>> listarTodos() {
-        List<AlertaResponse> response = alertaService.listarTodos()
+    public ResponseEntity<CollectionModel<AlertaResponse>> listarTodos() {
+        List<AlertaResponse> lista = alertaService.listarTodos()
                 .stream()
-                .map(AlertaResponse::from)
+                .map(alerta -> {
+                    AlertaResponse response = AlertaResponse.from(alerta);
+                    response.add(linkTo(methodOn(AlertaController.class).buscarPorId(alerta.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        return ResponseEntity.ok(response);
+        CollectionModel<AlertaResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(AlertaController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -54,7 +64,11 @@ public class AlertaController {
     })
     public ResponseEntity<AlertaResponse> buscarPorId(@PathVariable Long id) {
         Alerta alerta = alertaService.buscarPorId(id);
-        return ResponseEntity.ok(AlertaResponse.from(alerta));
+        AlertaResponse response = AlertaResponse.from(alerta);
+        response.add(linkTo(methodOn(AlertaController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(AlertaController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(AlertaController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -76,8 +90,10 @@ public class AlertaController {
                 .build();
 
         Alerta salvo = alertaService.salvar(alerta);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(AlertaResponse.from(salvo));
+        AlertaResponse response = AlertaResponse.from(salvo);
+        response.add(linkTo(methodOn(AlertaController.class).buscarPorId(salvo.getId())).withSelfRel());
+        response.add(linkTo(methodOn(AlertaController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -87,10 +103,7 @@ public class AlertaController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<AlertaResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid AlertaRequest request
-    ) {
+    public ResponseEntity<AlertaResponse> atualizar(@PathVariable Long id, @RequestBody @Valid AlertaRequest request) {
         Leitura leitura = leituraService.buscarPorId(request.idLeitura());
 
         Alerta alertaAtualizado = Alerta.builder()
@@ -103,8 +116,10 @@ public class AlertaController {
                 .build();
 
         Alerta atualizado = alertaService.atualizar(id, alertaAtualizado);
-
-        return ResponseEntity.ok(AlertaResponse.from(atualizado));
+        AlertaResponse response = AlertaResponse.from(atualizado);
+        response.add(linkTo(methodOn(AlertaController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(AlertaController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

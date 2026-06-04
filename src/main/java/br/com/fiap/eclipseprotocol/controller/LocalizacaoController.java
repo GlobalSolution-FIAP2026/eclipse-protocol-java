@@ -4,16 +4,19 @@ import br.com.fiap.eclipseprotocol.dto.request.LocalizacaoRequest;
 import br.com.fiap.eclipseprotocol.dto.response.LocalizacaoResponse;
 import br.com.fiap.eclipseprotocol.model.Localizacao;
 import br.com.fiap.eclipseprotocol.service.LocalizacaoService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Localizações", description = "Gerenciamento das localizações")
 @RestController
@@ -32,13 +35,20 @@ public class LocalizacaoController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<LocalizacaoResponse>> listarTodos() {
-        List<LocalizacaoResponse> response = service.listarTodos()
+    public ResponseEntity<CollectionModel<LocalizacaoResponse>> listarTodos() {
+        List<LocalizacaoResponse> lista = service.listarTodos()
                 .stream()
-                .map(LocalizacaoResponse::from)
+                .map(loc -> {
+                    LocalizacaoResponse response = LocalizacaoResponse.from(loc);
+                    response.add(linkTo(methodOn(LocalizacaoController.class).buscarPorId(loc.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        return ResponseEntity.ok(response);
+        CollectionModel<LocalizacaoResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(LocalizacaoController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -48,7 +58,11 @@ public class LocalizacaoController {
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
     public ResponseEntity<LocalizacaoResponse> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(LocalizacaoResponse.from(service.buscarPorId(id)));
+        LocalizacaoResponse response = LocalizacaoResponse.from(service.buscarPorId(id));
+        response.add(linkTo(methodOn(LocalizacaoController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(LocalizacaoController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(LocalizacaoController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -67,9 +81,11 @@ public class LocalizacaoController {
                 .cep(request.cep())
                 .build();
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(LocalizacaoResponse.from(service.salvar(localizacao)));
+        Localizacao salva = service.salvar(localizacao);
+        LocalizacaoResponse response = LocalizacaoResponse.from(salva);
+        response.add(linkTo(methodOn(LocalizacaoController.class).buscarPorId(salva.getId())).withSelfRel());
+        response.add(linkTo(methodOn(LocalizacaoController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -79,10 +95,7 @@ public class LocalizacaoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<LocalizacaoResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid LocalizacaoRequest request
-    ) {
+    public ResponseEntity<LocalizacaoResponse> atualizar(@PathVariable Long id, @RequestBody @Valid LocalizacaoRequest request) {
         Localizacao localizacao = Localizacao.builder()
                 .cidade(request.cidade())
                 .estado(request.estado())
@@ -92,7 +105,11 @@ public class LocalizacaoController {
                 .cep(request.cep())
                 .build();
 
-        return ResponseEntity.ok(LocalizacaoResponse.from(service.atualizar(id, localizacao)));
+        Localizacao atualizada = service.atualizar(id, localizacao);
+        LocalizacaoResponse response = LocalizacaoResponse.from(atualizada);
+        response.add(linkTo(methodOn(LocalizacaoController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(LocalizacaoController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

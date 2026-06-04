@@ -6,16 +6,19 @@ import br.com.fiap.eclipseprotocol.model.Plantacao;
 import br.com.fiap.eclipseprotocol.model.Sensor;
 import br.com.fiap.eclipseprotocol.service.PlantacaoService;
 import br.com.fiap.eclipseprotocol.service.SensorService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Sensores", description = "Gerenciamento dos sensores IoT")
 @RestController
@@ -25,10 +28,7 @@ public class SensorController {
     private final SensorService sensorService;
     private final PlantacaoService plantacaoService;
 
-    public SensorController(
-            SensorService sensorService,
-            PlantacaoService plantacaoService
-    ) {
+    public SensorController(SensorService sensorService, PlantacaoService plantacaoService) {
         this.sensorService = sensorService;
         this.plantacaoService = plantacaoService;
     }
@@ -39,13 +39,20 @@ public class SensorController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<SensorResponse>> listarTodos() {
-        List<SensorResponse> response = sensorService.listarTodos()
+    public ResponseEntity<CollectionModel<SensorResponse>> listarTodos() {
+        List<SensorResponse> lista = sensorService.listarTodos()
                 .stream()
-                .map(SensorResponse::from)
+                .map(sensor -> {
+                    SensorResponse response = SensorResponse.from(sensor);
+                    response.add(linkTo(methodOn(SensorController.class).buscarPorId(sensor.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        return ResponseEntity.ok(response);
+        CollectionModel<SensorResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(SensorController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -56,7 +63,11 @@ public class SensorController {
     })
     public ResponseEntity<SensorResponse> buscarPorId(@PathVariable Long id) {
         Sensor sensor = sensorService.buscarPorId(id);
-        return ResponseEntity.ok(SensorResponse.from(sensor));
+        SensorResponse response = SensorResponse.from(sensor);
+        response.add(linkTo(methodOn(SensorController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(SensorController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(SensorController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -66,7 +77,6 @@ public class SensorController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição")
     })
     public ResponseEntity<SensorResponse> criar(@RequestBody @Valid SensorRequest request) {
-
         Plantacao plantacao = plantacaoService.buscarPorId(request.idPlantacao());
 
         Sensor sensor = Sensor.builder()
@@ -76,9 +86,10 @@ public class SensorController {
                 .build();
 
         Sensor salvo = sensorService.salvar(sensor);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(SensorResponse.from(salvo));
+        SensorResponse response = SensorResponse.from(salvo);
+        response.add(linkTo(methodOn(SensorController.class).buscarPorId(salvo.getId())).withSelfRel());
+        response.add(linkTo(methodOn(SensorController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -88,11 +99,7 @@ public class SensorController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<SensorResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid SensorRequest request
-    ) {
-
+    public ResponseEntity<SensorResponse> atualizar(@PathVariable Long id, @RequestBody @Valid SensorRequest request) {
         Plantacao plantacao = plantacaoService.buscarPorId(request.idPlantacao());
 
         Sensor sensorAtualizado = Sensor.builder()
@@ -102,8 +109,10 @@ public class SensorController {
                 .build();
 
         Sensor atualizado = sensorService.atualizar(id, sensorAtualizado);
-
-        return ResponseEntity.ok(SensorResponse.from(atualizado));
+        SensorResponse response = SensorResponse.from(atualizado);
+        response.add(linkTo(methodOn(SensorController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(SensorController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

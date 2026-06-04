@@ -4,16 +4,19 @@ import br.com.fiap.eclipseprotocol.dto.request.UsuarioRequest;
 import br.com.fiap.eclipseprotocol.dto.response.UsuarioResponse;
 import br.com.fiap.eclipseprotocol.model.Usuario;
 import br.com.fiap.eclipseprotocol.service.UsuarioService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Usuários", description = "Gerenciamento de usuários da aplicação")
 @RestController
@@ -32,17 +35,24 @@ public class UsuarioController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<UsuarioResponse>> listarTodos() {
-        List<UsuarioResponse> response = service.listarTodos()
+    public ResponseEntity<CollectionModel<UsuarioResponse>> listarTodos() {
+        List<UsuarioResponse> lista = service.listarTodos()
                 .stream()
-                .map(UsuarioResponse::from)
+                .map(usuario -> {
+                    UsuarioResponse response = UsuarioResponse.from(usuario);
+                    response.add(linkTo(methodOn(UsuarioController.class).buscarPorId(usuario.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        if (response.isEmpty()) {
+        if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
-        return ResponseEntity.ok(response);
+        CollectionModel<UsuarioResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(UsuarioController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -53,7 +63,11 @@ public class UsuarioController {
     })
     public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Long id) {
         Usuario usuario = service.buscarPorId(id);
-        return ResponseEntity.ok(UsuarioResponse.from(usuario));
+        UsuarioResponse response = UsuarioResponse.from(usuario);
+        response.add(linkTo(methodOn(UsuarioController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(UsuarioController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(UsuarioController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -70,8 +84,10 @@ public class UsuarioController {
                 .build();
 
         Usuario salvo = service.salvar(usuario);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.from(salvo));
+        UsuarioResponse response = UsuarioResponse.from(salvo);
+        response.add(linkTo(methodOn(UsuarioController.class).buscarPorId(salvo.getId())).withSelfRel());
+        response.add(linkTo(methodOn(UsuarioController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -81,10 +97,7 @@ public class UsuarioController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<UsuarioResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid UsuarioRequest request
-    ) {
+    public ResponseEntity<UsuarioResponse> atualizar(@PathVariable Long id, @RequestBody @Valid UsuarioRequest request) {
         Usuario usuarioAtualizado = Usuario.builder()
                 .nome(request.nome())
                 .email(request.email())
@@ -92,8 +105,10 @@ public class UsuarioController {
                 .build();
 
         Usuario atualizado = service.atualizar(id, usuarioAtualizado);
-
-        return ResponseEntity.ok(UsuarioResponse.from(atualizado));
+        UsuarioResponse response = UsuarioResponse.from(atualizado);
+        response.add(linkTo(methodOn(UsuarioController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(UsuarioController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

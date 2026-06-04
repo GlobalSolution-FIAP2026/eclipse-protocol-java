@@ -6,16 +6,19 @@ import br.com.fiap.eclipseprotocol.model.Plantacao;
 import br.com.fiap.eclipseprotocol.model.Propriedade;
 import br.com.fiap.eclipseprotocol.service.PlantacaoService;
 import br.com.fiap.eclipseprotocol.service.PropriedadeService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Plantações", description = "Gerenciamento das plantações monitoradas")
 @RestController
@@ -36,13 +39,20 @@ public class PlantacaoController {
             @ApiResponse(responseCode = "200", description = "Registros encontrados com sucesso"),
             @ApiResponse(responseCode = "204", description = "Nenhum registro cadastrado")
     })
-    public ResponseEntity<List<PlantacaoResponse>> listarTodos() {
-        List<PlantacaoResponse> response = plantacaoService.listarTodos()
+    public ResponseEntity<CollectionModel<PlantacaoResponse>> listarTodos() {
+        List<PlantacaoResponse> lista = plantacaoService.listarTodos()
                 .stream()
-                .map(PlantacaoResponse::from)
+                .map(plantacao -> {
+                    PlantacaoResponse response = PlantacaoResponse.from(plantacao);
+                    response.add(linkTo(methodOn(PlantacaoController.class).buscarPorId(plantacao.getId())).withSelfRel());
+                    return response;
+                })
                 .toList();
 
-        return ResponseEntity.ok(response);
+        CollectionModel<PlantacaoResponse> collection = CollectionModel.of(lista,
+                linkTo(methodOn(PlantacaoController.class).listarTodos()).withSelfRel());
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -53,7 +63,11 @@ public class PlantacaoController {
     })
     public ResponseEntity<PlantacaoResponse> buscarPorId(@PathVariable Long id) {
         Plantacao plantacao = plantacaoService.buscarPorId(id);
-        return ResponseEntity.ok(PlantacaoResponse.from(plantacao));
+        PlantacaoResponse response = PlantacaoResponse.from(plantacao);
+        response.add(linkTo(methodOn(PlantacaoController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(PlantacaoController.class).listarTodos()).withRel("todos"));
+        response.add(linkTo(methodOn(PlantacaoController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -74,8 +88,10 @@ public class PlantacaoController {
                 .build();
 
         Plantacao salva = plantacaoService.salvar(plantacao);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(PlantacaoResponse.from(salva));
+        PlantacaoResponse response = PlantacaoResponse.from(salva);
+        response.add(linkTo(methodOn(PlantacaoController.class).buscarPorId(salva.getId())).withSelfRel());
+        response.add(linkTo(methodOn(PlantacaoController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -85,10 +101,7 @@ public class PlantacaoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos enviados na requisição"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<PlantacaoResponse> atualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid PlantacaoRequest request
-    ) {
+    public ResponseEntity<PlantacaoResponse> atualizar(@PathVariable Long id, @RequestBody @Valid PlantacaoRequest request) {
         Propriedade propriedade = propriedadeService.buscarPorId(request.idPropriedade());
 
         Plantacao plantacaoAtualizada = Plantacao.builder()
@@ -100,8 +113,10 @@ public class PlantacaoController {
                 .build();
 
         Plantacao atualizada = plantacaoService.atualizar(id, plantacaoAtualizada);
-
-        return ResponseEntity.ok(PlantacaoResponse.from(atualizada));
+        PlantacaoResponse response = PlantacaoResponse.from(atualizada);
+        response.add(linkTo(methodOn(PlantacaoController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(PlantacaoController.class).listarTodos()).withRel("todos"));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
