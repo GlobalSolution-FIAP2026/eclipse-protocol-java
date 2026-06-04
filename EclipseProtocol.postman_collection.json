@@ -2,7 +2,7 @@
   "info": {
     "name": "EclipseProtocol API",
     "_postman_id": "eclipse-protocol-collection",
-    "description": "Coleção completa da API EclipseProtocol - FIAP\n\nOrdem sugerida para testar:\n1. POST /usuarios\n2. POST /localizacoes\n3. POST /propriedades (usa idUsuario + idLocalizacao)\n4. POST /plantacoes (usa idPropriedade)\n5. POST /sensores (usa idPlantacao)\n6. POST /leituras (usa idSensor)\n7. POST /alertas (usa idLeitura + idPlantacao)",
+    "description": "Coleção completa da API EclipseProtocol - FIAP\n\nOrdem sugerida para testar:\n1. POST /auth/login (salve o token na variável {{token}})\n2. POST /usuarios\n3. POST /localizacoes\n4. POST /propriedades (usa idUsuario + idLocalizacao)\n5. POST /plantacoes (usa idPropriedade)\n6. POST /sensores (usa idPlantacao)\n7. POST /leituras (usa idSensor)\n8. POST /alertas (usa idLeitura + idPlantacao)\n9. POST /satelites\n10. POST /lixo-espacial\n11. POST /riscos-orbitais (usa idSatelite + idLixoEspacial)\n12. POST /imagens-satelite (usa idSatelite + idPlantacao)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,9 +10,51 @@
       "key": "baseUrl",
       "value": "http://localhost:8080",
       "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
+    {
+      "name": "00 - Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"gustavo.gomes@email.com\",\n  \"senha\": \"senha123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "01 - Usuarios",
       "item": [
@@ -20,7 +62,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios",
               "host": ["{{baseUrl}}"],
@@ -32,7 +76,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/1",
               "host": ["{{baseUrl}}"],
@@ -49,7 +95,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"João Silva\",\n  \"email\": \"joao.silva@email.com\",\n  \"senha\": \"senha123\"\n}"
+              "raw": "{\n  \"nome\": \"Gustavo Gomes Martins\",\n  \"email\": \"gustavo.gomes@email.com\",\n  \"senha\": \"senha123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/usuarios",
@@ -63,11 +109,12 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"João Silva Atualizado\",\n  \"email\": \"joao.novo@email.com\",\n  \"senha\": \"novaSenha123\"\n}"
+              "raw": "{\n  \"nome\": \"Gustavo Gomes Martins\",\n  \"email\": \"gustavo.novo@email.com\",\n  \"senha\": \"novaSenha123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/usuarios/1",
@@ -80,7 +127,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/usuarios/1",
               "host": ["{{baseUrl}}"],
@@ -97,7 +146,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/localizacoes",
               "host": ["{{baseUrl}}"],
@@ -109,7 +160,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/localizacoes/1",
               "host": ["{{baseUrl}}"],
@@ -122,7 +175,8 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -140,7 +194,8 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -157,7 +212,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/localizacoes/1",
               "host": ["{{baseUrl}}"],
@@ -174,7 +231,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/propriedades",
               "host": ["{{baseUrl}}"],
@@ -186,7 +245,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/propriedades/1",
               "host": ["{{baseUrl}}"],
@@ -199,11 +260,12 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Fazenda São João\",\n  \"proprietario\": \"João Silva\",\n  \"areaTotal\": 150.5,\n  \"tipoSolo\": \"Argiloso\",\n  \"idLocalizacao\": 1,\n  \"idUsuario\": 1\n}"
+              "raw": "{\n  \"nome\": \"Fazenda Gomes\",\n  \"proprietario\": \"Gustavo Gomes Martins\",\n  \"areaTotal\": 150.5,\n  \"tipoSolo\": \"Argiloso\",\n  \"idLocalizacao\": 1,\n  \"idUsuario\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/propriedades",
@@ -217,11 +279,12 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Fazenda São João Atualizada\",\n  \"proprietario\": \"João Silva\",\n  \"areaTotal\": 200.0,\n  \"tipoSolo\": \"Arenoso\",\n  \"idLocalizacao\": 1,\n  \"idUsuario\": 1\n}"
+              "raw": "{\n  \"nome\": \"Fazenda Gomes Atualizada\",\n  \"proprietario\": \"Gustavo Gomes Martins\",\n  \"areaTotal\": 200.0,\n  \"tipoSolo\": \"Arenoso\",\n  \"idLocalizacao\": 1,\n  \"idUsuario\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/propriedades/1",
@@ -234,7 +297,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/propriedades/1",
               "host": ["{{baseUrl}}"],
@@ -251,7 +316,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/plantacoes",
               "host": ["{{baseUrl}}"],
@@ -263,7 +330,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/plantacoes/1",
               "host": ["{{baseUrl}}"],
@@ -276,7 +345,8 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -294,7 +364,8 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -311,7 +382,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/plantacoes/1",
               "host": ["{{baseUrl}}"],
@@ -328,7 +401,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/sensores",
               "host": ["{{baseUrl}}"],
@@ -340,7 +415,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/sensores/1",
               "host": ["{{baseUrl}}"],
@@ -353,7 +430,8 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -371,7 +449,8 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -388,7 +467,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/sensores/1",
               "host": ["{{baseUrl}}"],
@@ -405,7 +486,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/leituras",
               "host": ["{{baseUrl}}"],
@@ -417,7 +500,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/leituras/1",
               "host": ["{{baseUrl}}"],
@@ -430,7 +515,8 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -448,7 +534,8 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -465,7 +552,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/leituras/1",
               "host": ["{{baseUrl}}"],
@@ -482,7 +571,9 @@
           "name": "Listar Todos",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/alertas",
               "host": ["{{baseUrl}}"],
@@ -494,7 +585,9 @@
           "name": "Buscar por ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/alertas/1",
               "host": ["{{baseUrl}}"],
@@ -507,7 +600,8 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -525,7 +619,8 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "body": {
               "mode": "raw",
@@ -542,7 +637,9 @@
           "name": "Deletar",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/alertas/1",
               "host": ["{{baseUrl}}"],
@@ -551,7 +648,346 @@
           }
         }
       ]
+    },
+    {
+      "name": "08 - Satelites",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/satelites",
+              "host": ["{{baseUrl}}"],
+              "path": ["satelites"]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/satelites/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["satelites", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Landsat-9\",\n  \"tipo\": \"Observação da Terra\",\n  \"orbita\": \"LEO\",\n  \"altitudeKm\": 705.0,\n  \"status\": \"ATIVO\",\n  \"dataLancamento\": \"2021-09-27\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/satelites",
+              "host": ["{{baseUrl}}"],
+              "path": ["satelites"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Landsat-9 Updated\",\n  \"tipo\": \"Observação da Terra\",\n  \"orbita\": \"LEO\",\n  \"altitudeKm\": 710.0,\n  \"status\": \"ATIVO\",\n  \"dataLancamento\": \"2021-09-27\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/satelites/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["satelites", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deletar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/satelites/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["satelites", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Lixo Espacial",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lixo-espacial",
+              "host": ["{{baseUrl}}"],
+              "path": ["lixo-espacial"]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lixo-espacial/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["lixo-espacial", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeObjeto\": \"Debris-2024-001\",\n  \"tipoObjeto\": \"Fragmento de foguete\",\n  \"altitudeKm\": 650.0,\n  \"velocidadeKmh\": 27000.0,\n  \"orbita\": \"LEO\",\n  \"dataIdentificacao\": \"2024-03-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lixo-espacial",
+              "host": ["{{baseUrl}}"],
+              "path": ["lixo-espacial"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeObjeto\": \"Debris-2024-001 Updated\",\n  \"tipoObjeto\": \"Fragmento de foguete\",\n  \"altitudeKm\": 640.0,\n  \"velocidadeKmh\": 27100.0,\n  \"orbita\": \"LEO\",\n  \"dataIdentificacao\": \"2024-03-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lixo-espacial/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["lixo-espacial", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deletar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lixo-espacial/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["lixo-espacial", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Riscos Orbitais",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/riscos-orbitais",
+              "host": ["{{baseUrl}}"],
+              "path": ["riscos-orbitais"]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/riscos-orbitais/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["riscos-orbitais", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSatelite\": 1,\n  \"idLixoEspacial\": 1,\n  \"nivelRisco\": \"ALTO\",\n  \"descricaoRisco\": \"Colisão potencial detectada entre satélite e fragmento de lixo espacial.\",\n  \"dataAnalise\": \"2024-06-04T10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/riscos-orbitais",
+              "host": ["{{baseUrl}}"],
+              "path": ["riscos-orbitais"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSatelite\": 1,\n  \"idLixoEspacial\": 1,\n  \"nivelRisco\": \"MEDIO\",\n  \"descricaoRisco\": \"Risco reclassificado após nova análise orbital.\",\n  \"dataAnalise\": \"2024-06-05T14:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/riscos-orbitais/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["riscos-orbitais", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deletar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/riscos-orbitais/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["riscos-orbitais", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Imagens Satelite",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/imagens-satelite",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagens-satelite"]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/imagens-satelite/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagens-satelite", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSatelite\": 1,\n  \"idPlantacao\": 1,\n  \"urlImagem\": \"https://storage.example.com/imagens/landsat9-2024-06-04.tif\",\n  \"ndvi\": 0.75,\n  \"coberturaNuvem\": 5.2,\n  \"dataCaptura\": \"2024-06-04T08:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/imagens-satelite",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagens-satelite"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSatelite\": 1,\n  \"idPlantacao\": 1,\n  \"urlImagem\": \"https://storage.example.com/imagens/landsat9-2024-06-05.tif\",\n  \"ndvi\": 0.80,\n  \"coberturaNuvem\": 3.0,\n  \"dataCaptura\": \"2024-06-05T09:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/imagens-satelite/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagens-satelite", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deletar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/imagens-satelite/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagens-satelite", "1"]
+            }
+          }
+        }
+      ]
     }
   ]
 }
-
