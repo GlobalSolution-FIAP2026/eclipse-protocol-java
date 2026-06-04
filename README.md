@@ -601,15 +601,10 @@ A aplicação estará disponível em: **http://localhost:8080**
 | API Base | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
 | OpenAPI Docs | http://localhost:8080/v3/api-docs |
-| H2 Console | http://localhost:8080/h2-console |
 | Login GitHub | http://localhost:8080/oauth2/authorization/github |
 
-### Configuração H2 Console
-| Campo | Valor |
-|---|---|
-| JDBC URL | `jdbc:h2:mem:eclipseprotocol` |
-| Username | `sa` |
-| Password | *(vazio)* |
+### Configuração Oracle
+Está no application.properties
 
 ---
 
@@ -660,7 +655,7 @@ Importe o arquivo `EclipseProtocol.postman_collection.json` disponível na raiz 
 | TB_LIXO_ESPACIAL | LixoEspacial |
 | TB_RISCO_ORBITAL | RiscoOrbital |
 
-> O banco H2 é criado em memória a cada inicialização (`ddl-auto=create-drop`).
+> O banco oracle.
 
 ---
 
