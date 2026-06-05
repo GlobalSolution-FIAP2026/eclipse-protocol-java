@@ -26,12 +26,22 @@ public class Localizacao {
     @Column(name = "DS_PAIS", nullable = false, length = 60)
     private String pais;
 
-    @Column(name = "NR_LATITUDE", nullable = false)
-    private Double latitude;
-
-    @Column(name = "NR_LONGITUDE", nullable = false)
-    private Double longitude;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "latitude",  column = @Column(name = "NR_LATITUDE",  nullable = false)),
+            @AttributeOverride(name = "longitude", column = @Column(name = "NR_LONGITUDE", nullable = false))
+    })
+    private Coordenadas coordenadas;
 
     @Column(name = "DS_CEP", length = 10)
     private String cep;
+
+    @Embeddable
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Coordenadas {
+        private Double latitude;
+        private Double longitude;
+    }
 }

@@ -20,8 +20,9 @@ public class RiscoOrbitalService {
         return repository.findAll();
     }
 
-    public RiscoOrbital buscarPorId(Long id) {
-        return repository.findById(id)
+    public RiscoOrbital buscarPorId(Long idSatelite, Long idLixoEspacial) {
+        RiscoOrbital.RiscoOrbitalId chave = new RiscoOrbital.RiscoOrbitalId(idSatelite, idLixoEspacial);
+        return repository.findById(chave)
                 .orElseThrow(() -> new ResourceNotFoundException("Risco orbital não encontrado"));
     }
 
@@ -29,11 +30,9 @@ public class RiscoOrbitalService {
         return repository.save(riscoOrbital);
     }
 
-    public RiscoOrbital atualizar(Long id, RiscoOrbital riscoAtualizado) {
-        RiscoOrbital risco = buscarPorId(id);
+    public RiscoOrbital atualizar(Long idSatelite, Long idLixoEspacial, RiscoOrbital riscoAtualizado) {
+        RiscoOrbital risco = buscarPorId(idSatelite, idLixoEspacial);
 
-        risco.setSatelite(riscoAtualizado.getSatelite());
-        risco.setLixoEspacial(riscoAtualizado.getLixoEspacial());
         risco.setNivelRisco(riscoAtualizado.getNivelRisco());
         risco.setDescricaoRisco(riscoAtualizado.getDescricaoRisco());
         risco.setDataAnalise(riscoAtualizado.getDataAnalise());
@@ -41,8 +40,8 @@ public class RiscoOrbitalService {
         return repository.save(risco);
     }
 
-    public void deletar(Long id) {
-        RiscoOrbital risco = buscarPorId(id);
+    public void deletar(Long idSatelite, Long idLixoEspacial) {
+        RiscoOrbital risco = buscarPorId(idSatelite, idLixoEspacial);
         repository.delete(risco);
     }
 }

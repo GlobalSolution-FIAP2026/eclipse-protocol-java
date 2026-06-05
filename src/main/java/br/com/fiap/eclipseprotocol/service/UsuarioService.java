@@ -5,6 +5,7 @@ import br.com.fiap.eclipseprotocol.exception.ResourceNotFoundException;
 import br.com.fiap.eclipseprotocol.model.Usuario;
 import br.com.fiap.eclipseprotocol.repository.PropriedadeRepository;
 import br.com.fiap.eclipseprotocol.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,11 +14,14 @@ import java.util.List;
 public class UsuarioService {
     private final UsuarioRepository repository;
     private final PropriedadeRepository propriedadeRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(UsuarioRepository repository,
-                          PropriedadeRepository propriedadeRepository) {
+                          PropriedadeRepository propriedadeRepository,
+                          PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.propriedadeRepository = propriedadeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Usuario> listarTodos() {
@@ -30,6 +34,7 @@ public class UsuarioService {
     }
 
     public Usuario salvar(Usuario usuario) {
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         return repository.save(usuario);
     }
 
@@ -38,7 +43,7 @@ public class UsuarioService {
 
         usuario.setNome(usuarioAtualizado.getNome());
         usuario.setEmail(usuarioAtualizado.getEmail());
-        usuario.setSenha(usuarioAtualizado.getSenha());
+        usuario.setSenha(passwordEncoder.encode(usuarioAtualizado.getSenha()));
         usuario.setAtivo(usuarioAtualizado.getAtivo());
 
         return repository.save(usuario);

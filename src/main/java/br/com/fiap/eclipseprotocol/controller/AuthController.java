@@ -9,6 +9,7 @@ import br.com.fiap.eclipseprotocol.service.TokenService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,10 +19,14 @@ public class AuthController {
 
     private final UsuarioRepository usuarioRepository;
     private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UsuarioRepository usuarioRepository, TokenService tokenService) {
+    public AuthController(UsuarioRepository usuarioRepository,
+                          TokenService tokenService,
+                          PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.tokenService = tokenService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
@@ -29,7 +34,7 @@ public class AuthController {
         Usuario usuario = usuarioRepository.findByEmail(request.email())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
-        if (!usuario.getSenha().equals(request.senha())) {
+        if (!passwordEncoder.matches(request.senha(), usuario.getSenha())) {
             throw new ResourceNotFoundException("Email ou senha inválidos");
         }
 

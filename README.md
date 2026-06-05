@@ -164,9 +164,12 @@ src/main/java/br/com/fiap/eclipseprotocol/
 | cidade | String | Cidade |
 | estado | String | Estado (UF) |
 | pais | String | País |
-| latitude | Double | Latitude geográfica |
-| longitude | Double | Longitude geográfica |
+| coordenadas | **@Embedded** `Coordenadas` | Objeto embutido com latitude e longitude |
+| coordenadas.latitude | Double | Latitude geográfica |
+| coordenadas.longitude | Double | Longitude geográfica |
 | cep | String | CEP |
+
+> `Coordenadas` é uma classe `@Embeddable` dentro de `Localizacao`. Os campos `latitude` e `longitude` são persistidos diretamente nas colunas `NR_LATITUDE` e `NR_LONGITUDE` via `@AttributeOverride`.
 
 ### 🏡 Propriedade
 | Campo | Tipo | Descrição |
@@ -196,6 +199,8 @@ src/main/java/br/com/fiap/eclipseprotocol/
 | tipo | String | Tipo do sensor |
 | ativo | Boolean | Status do sensor |
 | plantacao | Plantacao | FK plantação |
+
+> `Sensor` usa `@Inheritance(SINGLE_TABLE)`. O subtipo `SensorEspecializado` estende `Sensor` adicionando o campo `unidadeMedida`. O discriminador é a coluna `DS_SUBTIPO`.
 
 ### 📊 Leitura
 | Campo | Tipo | Descrição |
@@ -278,12 +283,14 @@ src/main/java/br/com/fiap/eclipseprotocol/
 ### ⚠️ RiscoOrbital *(Camada Espacial)*
 | Campo | Tipo | Descrição |
 |---|---|---|
-| id | Long | Identificador único |
-| satelite | Satelite | FK satélite (N:1) |
-| lixoEspacial | LixoEspacial | FK lixo espacial (N:1) |
+| idSatelite + idLixoEspacial | **Chave composta** (`@EmbeddedId`) | Par único que identifica o risco |
+| satelite | Satelite | FK satélite (N:1) — parte da chave |
+| lixoEspacial | LixoEspacial | FK lixo espacial (N:1) — parte da chave |
 | nivelRisco | Enum | Nível de risco identificado |
 | descricaoRisco | String | Descrição detalhada do risco |
 | dataAnalise | LocalDateTime | Data/hora da análise |
+
+> A chave primária é composta por `(idSatelite, idLixoEspacial)`. Só pode existir **um registro de risco por par satélite/debris**.
 
 #### Enum NivelRisco
 | Valor | Descrição |
@@ -295,7 +302,186 @@ src/main/java/br/com/fiap/eclipseprotocol/
 
 ---
 
-## 🔗 HATEOAS
+## 🏛️ Modelagem Avançada (JPA)
+
+O projeto implementa os três pilares de modelagem avançada exigidos:
+
+### 1. Herança — `Sensor` + `SensorEspecializado`
+Estratégia **SINGLE_TABLE**: ambas as classes compartilham a tabela `TB_SENSOR`. A coluna `DS_SUBTIPO` distingue o tipo:
+- `GENERICO` → instâncias de `Sensor`
+- `ESPECIALIZADO` → instâncias de `SensorEspecializado` (adiciona o campo `unidadeMedida`)
+
+### 2. @Embeddable / @Embedded — `Localizacao.Coordenadas`
+A classe interna `Coordenadas` é anotada com `@Embeddable` e contém `latitude` e `longitude`. O campo `coordenadas` em `Localizacao` usa `@Embedded` com `@AttributeOverrides` para manter os nomes de colunas originais (`NR_LATITUDE`, `NR_LONGITUDE`).
+
+### 3. Chave Composta — `RiscoOrbital.RiscoOrbitalId`
+A classe interna `RiscoOrbitalId` é anotada com `@Embeddable` e contém `idSatelite` e `idLixoEspacial`. O campo `id` em `RiscoOrbital` usa `@EmbeddedId`, e as associações `@ManyToOne` usam `@MapsId` para sincronizar automaticamente os valores do FK com a chave composta.
+
+---
+
+## 📝 Exemplos de Corpo para Requisições POST
+
+Siga esta ordem ao cadastrar pela primeira vez (as entidades têm dependências entre si).
+
+### 1. Criar Usuário — `POST /usuarios`
+*(Endpoint público — não precisa de token)*
+```json
+{
+  "nome": "João Silva",
+  "email": "joao@email.com",
+  "senha": "senha123"
+}
+```
+
+### 2. Login — `POST /auth/login`
+*(Retorna o token JWT — use-o em todas as requisições seguintes)*
+```json
+{
+  "email": "joao@email.com",
+  "senha": "senha123"
+}
+```
+**Resposta:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "tipo": "Bearer"
+}
+```
+
+---
+
+### 3. Criar Localização — `POST /localizacoes`
+```json
+{
+  "cidade": "Ribeirão Preto",
+  "estado": "SP",
+  "pais": "Brasil",
+  "latitude": -21.1767,
+  "longitude": -47.8208,
+  "cep": "14010-000"
+}
+```
+
+### 4. Criar Propriedade — `POST /propriedades`
+*(Precisa de `idLocalizacao` e `idUsuario` já criados)*
+```json
+{
+  "nome": "Fazenda São João",
+  "proprietario": "João Silva",
+  "areaTotal": 150.5,
+  "tipoSolo": "Argiloso",
+  "idLocalizacao": 1,
+  "idUsuario": 1
+}
+```
+
+### 5. Criar Plantação — `POST /plantacoes`
+*(Precisa de `idPropriedade` já criado)*
+```json
+{
+  "nome": "Plantação Norte",
+  "cultura": "Soja",
+  "areaHectares": 50.0,
+  "status": "Ativo",
+  "idPropriedade": 1
+}
+```
+
+### 6. Criar Sensor — `POST /sensores`
+*(Precisa de `idPlantacao` já criado)*
+```json
+{
+  "nome": "Sensor Temperatura 01",
+  "tipo": "TEMPERATURA",
+  "idPlantacao": 1
+}
+```
+
+### 7. Registrar Leitura — `POST /leituras`
+*(Precisa de `sensor` — ID do sensor — já criado. `dataLeitura` é preenchida automaticamente pelo servidor)*
+```json
+{
+  "sensor": 1,
+  "temperatura": 28.5,
+  "umidade": 65.0,
+  "precipitacao": 12.3,
+  "ndvi": 0.75
+}
+```
+
+### 8. Criar Alerta — `POST /alertas`
+*(Precisa de `idLeitura` e `idPlantacao` já criados)*
+
+**Valores válidos para `tipoAlerta`:** `TEMP_ALTA`, `TEMP_BAIXA`, `UMID_ALTA`, `UMID_BAIXA`, `NDVI_CRITICO`, `PRECIPITACAO_EXCESSIVA`
+
+**Valores válidos para `severidade`:** `BAIXA`, `MEDIA`, `ALTA`, `CRITICA`
+```json
+{
+  "idLeitura": 1,
+  "idPlantacao": 1,
+  "tipoAlerta": "TEMP_ALTA",
+  "severidade": "MEDIA",
+  "mensagem": "Temperatura acima do limite recomendado para a cultura."
+}
+```
+
+---
+
+### 9. Cadastrar Satélite — `POST /satelites`
+
+**Valores válidos para `status`:** `ATIVO`, `INATIVO`, `DESCOMISSIONADO`
+```json
+{
+  "nome": "Sentinel-2A",
+  "tipo": "Observação da Terra",
+  "orbita": "LEO",
+  "altitudeKm": 786.0,
+  "status": "ATIVO",
+  "dataLancamento": "2015-06-23"
+}
+```
+
+### 10. Registrar Lixo Espacial — `POST /lixo-espacial`
+```json
+{
+  "nomeObjeto": "Debris-2024-001",
+  "tipoObjeto": "Fragmento de foguete",
+  "altitudeKm": 600.0,
+  "velocidadeKmh": 28000.0,
+  "orbita": "LEO",
+  "dataIdentificacao": "2024-01-15"
+}
+```
+
+### 11. Registrar Imagem de Satélite — `POST /imagens-satelite`
+*(Precisa de `idSatelite` e `idPlantacao` já criados)*
+```json
+{
+  "idSatelite": 1,
+  "idPlantacao": 1,
+  "urlImagem": "https://copernicus.eu/images/2026/sentinel2_001.jpg",
+  "ndvi": 0.72,
+  "coberturaNuvem": 5.3,
+  "dataCaptura": "2026-06-05T08:00:00"
+}
+```
+
+### 12. Registrar Risco Orbital — `POST /riscos-orbitais`
+*(Precisa de `idSatelite` e `idLixoEspacial` já criados. A chave primária é o par — só pode haver UM risco por combinação)*
+
+**Valores válidos para `nivelRisco`:** `BAIXO`, `MODERADO`, `ALTO`, `CRITICO`
+```json
+{
+  "idSatelite": 1,
+  "idLixoEspacial": 1,
+  "nivelRisco": "ALTO",
+  "descricaoRisco": "Aproximação crítica detectada a menos de 500 metros.",
+  "dataAnalise": "2026-06-05T09:00:00"
+}
+```
+
+---
 
 Todos os endpoints de recursos retornam links de navegação hypermedia no campo `_links`:
 
@@ -335,6 +521,8 @@ Listagens retornam `CollectionModel` com `_embedded` e `_links`. O nome da chave
 ## 🔐 Autenticação
 
 A API utiliza **JWT (JSON Web Token)** com algoritmo **HS256** via Spring Security OAuth2 Resource Server.
+
+> ⚠️ As senhas são armazenadas com **BCrypt**. Ao criar um usuário via `POST /usuarios`, a senha é automaticamente cifrada. No login, a comparação é feita com `passwordEncoder.matches()` — envie sempre a senha em texto puro no body.
 
 ### Rotas públicas (sem autenticação)
 | Método | Endpoint | Descrição |
@@ -559,10 +747,10 @@ O sistema impede a exclusão de entidades que possuam relacionamentos ativos, ga
 | Método | Endpoint | Descrição | Auth |
 |---|---|---|---|
 | GET | `/riscos-orbitais` | Lista todos os riscos | ✅ |
-| GET | `/riscos-orbitais/{id}` | Busca risco por ID | ✅ |
+| GET | `/riscos-orbitais/{idSatelite}/{idLixoEspacial}` | Busca risco pela chave composta | ✅ |
 | POST | `/riscos-orbitais` | Registra novo risco | ✅ |
-| PUT | `/riscos-orbitais/{id}` | Atualiza risco | ✅ |
-| DELETE | `/riscos-orbitais/{id}` | Remove risco | ✅ |
+| PUT | `/riscos-orbitais/{idSatelite}/{idLixoEspacial}` | Atualiza risco | ✅ |
+| DELETE | `/riscos-orbitais/{idSatelite}/{idLixoEspacial}` | Remove risco | ✅ |
 
 ---
 
@@ -587,7 +775,7 @@ git clone https://github.com/seu-usuario/eclipse-protocol.git
 cd EclipseProtocol
 
 # Execute com Maven
-./mvnw spring-boot:run
+./mvnd spring-boot:run
 ```
 
 A aplicação estará disponível em: **http://localhost:8080**

@@ -6,6 +6,9 @@ import lombok.*;
 
 @Entity
 @Table(name = "TB_SENSOR")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "DS_SUBTIPO", discriminatorType = DiscriminatorType.STRING, length = 50)
+@DiscriminatorValue("GENERICO")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,4 +34,15 @@ public class Sensor {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_PLANTACAO")
     private Plantacao plantacao;
+
+    @Entity
+    @DiscriminatorValue("ESPECIALIZADO")
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class SensorEspecializado extends Sensor {
+
+        @Column(name = "DS_UNIDADE_MEDIDA", length = 20)
+        private String unidadeMedida;
+    }
 }

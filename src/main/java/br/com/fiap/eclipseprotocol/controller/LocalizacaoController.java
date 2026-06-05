@@ -76,8 +76,7 @@ public class LocalizacaoController {
                 .cidade(request.cidade())
                 .estado(request.estado())
                 .pais(request.pais())
-                .latitude(request.latitude())
-                .longitude(request.longitude())
+                .coordenadas(new Localizacao.Coordenadas(request.latitude(), request.longitude()))
                 .cep(request.cep())
                 .build();
 
@@ -100,8 +99,7 @@ public class LocalizacaoController {
                 .cidade(request.cidade())
                 .estado(request.estado())
                 .pais(request.pais())
-                .latitude(request.latitude())
-                .longitude(request.longitude())
+                .coordenadas(new Localizacao.Coordenadas(request.latitude(), request.longitude()))
                 .cep(request.cep())
                 .build();
 

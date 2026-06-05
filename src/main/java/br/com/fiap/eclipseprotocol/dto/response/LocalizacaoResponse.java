@@ -32,8 +32,8 @@ public class LocalizacaoResponse extends RepresentationModel<LocalizacaoResponse
                 l.getCidade(),
                 l.getEstado(),
                 l.getPais(),
-                l.getLatitude(),
-                l.getLongitude(),
+                l.getCoordenadas() != null ? l.getCoordenadas().getLatitude()  : null,
+                l.getCoordenadas() != null ? l.getCoordenadas().getLongitude() : null,
                 l.getCep()
         );
     }

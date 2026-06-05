@@ -51,7 +51,8 @@ public class RiscoOrbitalController {
                 .stream()
                 .map(risco -> {
                     RiscoOrbitalResponse response = RiscoOrbitalResponse.from(risco);
-                    response.add(linkTo(methodOn(RiscoOrbitalController.class).buscarPorId(risco.getId())).withSelfRel());
+                    response.add(linkTo(methodOn(RiscoOrbitalController.class)
+                            .buscarPorId(risco.getId().getIdSatelite(), risco.getId().getIdLixoEspacial())).withSelfRel());
                     return response;
                 })
                 .toList();
@@ -62,18 +63,20 @@ public class RiscoOrbitalController {
         return ResponseEntity.ok(collection);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Buscar por ID", description = "Retorna um registro específico pelo ID informado")
+    @GetMapping("/{idSatelite}/{idLixoEspacial}")
+    @Operation(summary = "Buscar por ID", description = "Retorna um registro específico pela chave composta (satélite + lixo espacial)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Registro encontrado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
-    public ResponseEntity<RiscoOrbitalResponse> buscarPorId(@PathVariable Long id) {
-        RiscoOrbital risco = riscoOrbitalService.buscarPorId(id);
+    public ResponseEntity<RiscoOrbitalResponse> buscarPorId(
+            @PathVariable Long idSatelite,
+            @PathVariable Long idLixoEspacial) {
+        RiscoOrbital risco = riscoOrbitalService.buscarPorId(idSatelite, idLixoEspacial);
         RiscoOrbitalResponse response = RiscoOrbitalResponse.from(risco);
-        response.add(linkTo(methodOn(RiscoOrbitalController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(RiscoOrbitalController.class).buscarPorId(idSatelite, idLixoEspacial)).withSelfRel());
         response.add(linkTo(methodOn(RiscoOrbitalController.class).listarTodos()).withRel("todos"));
-        response.add(linkTo(methodOn(RiscoOrbitalController.class).deletar(id)).withRel("deletar"));
+        response.add(linkTo(methodOn(RiscoOrbitalController.class).deletar(idSatelite, idLixoEspacial)).withRel("deletar"));
         return ResponseEntity.ok(response);
     }
 
@@ -88,6 +91,7 @@ public class RiscoOrbitalController {
         LixoEspacial lixoEspacial = lixoEspacialService.buscarPorId(request.idLixoEspacial());
 
         RiscoOrbital risco = RiscoOrbital.builder()
+                .id(new RiscoOrbital.RiscoOrbitalId(satelite.getId(), lixoEspacial.getId()))
                 .satelite(satelite)
                 .lixoEspacial(lixoEspacial)
                 .nivelRisco(RiscoOrbital.NivelRisco.valueOf(request.nivelRisco()))
@@ -97,12 +101,13 @@ public class RiscoOrbitalController {
 
         RiscoOrbital salvo = riscoOrbitalService.salvar(risco);
         RiscoOrbitalResponse response = RiscoOrbitalResponse.from(salvo);
-        response.add(linkTo(methodOn(RiscoOrbitalController.class).buscarPorId(salvo.getId())).withSelfRel());
+        response.add(linkTo(methodOn(RiscoOrbitalController.class)
+                .buscarPorId(salvo.getId().getIdSatelite(), salvo.getId().getIdLixoEspacial())).withSelfRel());
         response.add(linkTo(methodOn(RiscoOrbitalController.class).listarTodos()).withRel("todos"));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{idSatelite}/{idLixoEspacial}")
     @Operation(summary = "Atualizar registro", description = "Atualiza um registro existente")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Registro atualizado com sucesso"),
@@ -110,36 +115,34 @@ public class RiscoOrbitalController {
             @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     })
     public ResponseEntity<RiscoOrbitalResponse> atualizar(
-            @PathVariable Long id,
+            @PathVariable Long idSatelite,
+            @PathVariable Long idLixoEspacial,
             @RequestBody @Valid UpdateRiscoOrbitalRequest request
     ) {
-        Satelite satelite = sateliteService.buscarPorId(request.idSatelite());
-        LixoEspacial lixoEspacial = lixoEspacialService.buscarPorId(request.idLixoEspacial());
-
         RiscoOrbital riscoAtualizado = RiscoOrbital.builder()
-                .satelite(satelite)
-                .lixoEspacial(lixoEspacial)
                 .nivelRisco(RiscoOrbital.NivelRisco.valueOf(request.nivelRisco()))
                 .descricaoRisco(request.descricaoRisco())
                 .dataAnalise(request.dataAnalise())
                 .build();
 
-        RiscoOrbital atualizado = riscoOrbitalService.atualizar(id, riscoAtualizado);
+        RiscoOrbital atualizado = riscoOrbitalService.atualizar(idSatelite, idLixoEspacial, riscoAtualizado);
         RiscoOrbitalResponse response = RiscoOrbitalResponse.from(atualizado);
-        response.add(linkTo(methodOn(RiscoOrbitalController.class).buscarPorId(id)).withSelfRel());
+        response.add(linkTo(methodOn(RiscoOrbitalController.class).buscarPorId(idSatelite, idLixoEspacial)).withSelfRel());
         response.add(linkTo(methodOn(RiscoOrbitalController.class).listarTodos()).withRel("todos"));
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{idSatelite}/{idLixoEspacial}")
     @Operation(summary = "Deletar registro", description = "Remove um registro pelo ID informado")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Registro deletado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Registro não encontrado"),
             @ApiResponse(responseCode = "409", description = "Registro possui vínculo e não pode ser deletado")
     })
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        riscoOrbitalService.deletar(id);
+    public ResponseEntity<Void> deletar(
+            @PathVariable Long idSatelite,
+            @PathVariable Long idLixoEspacial) {
+        riscoOrbitalService.deletar(idSatelite, idLixoEspacial);
         return ResponseEntity.noContent().build();
     }
 }

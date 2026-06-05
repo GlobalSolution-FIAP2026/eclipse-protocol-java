@@ -42,8 +42,7 @@ public class LocalizacaoService {
         localizacao.setCidade(localizacaoAtualizada.getCidade());
         localizacao.setEstado(localizacaoAtualizada.getEstado());
         localizacao.setPais(localizacaoAtualizada.getPais());
-        localizacao.setLatitude(localizacaoAtualizada.getLatitude());
-        localizacao.setLongitude(localizacaoAtualizada.getLongitude());
+        localizacao.setCoordenadas(localizacaoAtualizada.getCoordenadas());
         localizacao.setCep(localizacaoAtualizada.getCep());
 
         return repository.save(localizacao);

@@ -2,7 +2,7 @@
   "info": {
     "name": "EclipseProtocol API",
     "_postman_id": "eclipse-protocol-collection",
-    "description": "Coleção completa da API EclipseProtocol - FIAP\n\nOrdem sugerida para testar:\n1. POST /auth/login (salve o token na variável {{token}})\n2. POST /usuarios\n3. POST /localizacoes\n4. POST /propriedades (usa idUsuario + idLocalizacao)\n5. POST /plantacoes (usa idPropriedade)\n6. POST /sensores (usa idPlantacao)\n7. POST /leituras (usa idSensor)\n8. POST /alertas (usa idLeitura + idPlantacao)\n9. POST /satelites\n10. POST /lixo-espacial\n11. POST /riscos-orbitais (usa idSatelite + idLixoEspacial)\n12. POST /imagens-satelite (usa idSatelite + idPlantacao)",
+    "description": "Coleção completa da API EclipseProtocol - FIAP\n\nOrdem sugerida para testar:\n1. POST /usuarios (sem token)\n2. POST /auth/login → salve o token na variável {{token}}\n3. POST /localizacoes\n4. POST /propriedades (usa idUsuario + idLocalizacao)\n5. POST /plantacoes (usa idPropriedade)\n6. POST /sensores (usa idPlantacao)\n7. POST /leituras (usa idSensor)\n8. POST /alertas (usa idLeitura + idPlantacao)\n9. POST /satelites\n10. POST /lixo-espacial\n11. POST /imagens-satelite (usa idSatelite + idPlantacao)\n12. POST /riscos-orbitais (usa idSatelite + idLixoEspacial)\n\nATENÇÃO - Riscos Orbitais usa CHAVE COMPOSTA:\n  GET/PUT/DELETE: /riscos-orbitais/{idSatelite}/{idLixoEspacial}",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -837,16 +837,16 @@
           }
         },
         {
-          "name": "Buscar por ID",
+          "name": "Buscar por Chave Composta",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/riscos-orbitais/1",
+              "raw": "{{baseUrl}}/riscos-orbitais/1/1",
               "host": ["{{baseUrl}}"],
-              "path": ["riscos-orbitais", "1"]
+              "path": ["riscos-orbitais", "1", "1"]
             }
           }
         },
@@ -860,7 +860,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idSatelite\": 1,\n  \"idLixoEspacial\": 1,\n  \"nivelRisco\": \"ALTO\",\n  \"descricaoRisco\": \"Colisão potencial detectada entre satélite e fragmento de lixo espacial.\",\n  \"dataAnalise\": \"2024-06-04T10:00:00\"\n}"
+              "raw": "{\n  \"idSatelite\": 1,\n  \"idLixoEspacial\": 1,\n  \"nivelRisco\": \"ALTO\",\n  \"descricaoRisco\": \"Colisão potencial detectada entre satélite e fragmento de lixo espacial.\",\n  \"dataAnalise\": \"2026-06-05T10:00:00\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/riscos-orbitais",
@@ -879,12 +879,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idSatelite\": 1,\n  \"idLixoEspacial\": 1,\n  \"nivelRisco\": \"MEDIO\",\n  \"descricaoRisco\": \"Risco reclassificado após nova análise orbital.\",\n  \"dataAnalise\": \"2024-06-05T14:30:00\"\n}"
+              "raw": "{\n  \"idSatelite\": 1,\n  \"idLixoEspacial\": 1,\n  \"nivelRisco\": \"MODERADO\",\n  \"descricaoRisco\": \"Risco reclassificado após nova análise orbital.\",\n  \"dataAnalise\": \"2026-06-05T14:30:00\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/riscos-orbitais/1",
+              "raw": "{{baseUrl}}/riscos-orbitais/1/1",
               "host": ["{{baseUrl}}"],
-              "path": ["riscos-orbitais", "1"]
+              "path": ["riscos-orbitais", "1", "1"]
             }
           }
         },
@@ -896,9 +896,9 @@
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/riscos-orbitais/1",
+              "raw": "{{baseUrl}}/riscos-orbitais/1/1",
               "host": ["{{baseUrl}}"],
-              "path": ["riscos-orbitais", "1"]
+              "path": ["riscos-orbitais", "1", "1"]
             }
           }
         }

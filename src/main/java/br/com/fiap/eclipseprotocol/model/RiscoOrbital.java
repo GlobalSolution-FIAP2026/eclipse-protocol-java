@@ -3,6 +3,7 @@ package br.com.fiap.eclipseprotocol.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,12 +15,11 @@ import java.time.LocalDateTime;
 @Builder
 public class RiscoOrbital {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_RISCO_ORBITAL")
-    private Long id;
+    @EmbeddedId
+    private RiscoOrbitalId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("idSatelite")
     @JoinColumn(
             name = "ID_SATELITE",
             nullable = false,
@@ -28,6 +28,7 @@ public class RiscoOrbital {
     private Satelite satelite;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("idLixoEspacial")
     @JoinColumn(
             name = "ID_LIXO_ESPACIAL",
             nullable = false,
@@ -44,6 +45,20 @@ public class RiscoOrbital {
 
     @Column(name = "DT_ANALISE", nullable = false)
     private LocalDateTime dataAnalise;
+
+    @Embeddable
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    public static class RiscoOrbitalId implements Serializable {
+
+        @Column(name = "ID_SATELITE")
+        private Long idSatelite;
+
+        @Column(name = "ID_LIXO_ESPACIAL")
+        private Long idLixoEspacial;
+    }
 
     public enum NivelRisco {
         BAIXO, MODERADO, ALTO, CRITICO

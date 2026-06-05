@@ -34,10 +34,10 @@ public class RiscoOrbitalResponse extends RepresentationModel<RiscoOrbitalRespon
 
     public static RiscoOrbitalResponse from(RiscoOrbital r) {
         return new RiscoOrbitalResponse(
-                r.getId(),
-                r.getSatelite() != null ? r.getSatelite().getId() : null,
+                null,
+                r.getId() != null ? r.getId().getIdSatelite() : null,
                 r.getSatelite() != null ? r.getSatelite().getNome() : null,
-                r.getLixoEspacial() != null ? r.getLixoEspacial().getId() : null,
+                r.getId() != null ? r.getId().getIdLixoEspacial() : null,
                 r.getLixoEspacial() != null ? r.getLixoEspacial().getNomeObjeto() : null,
                 r.getNivelRisco() != null ? r.getNivelRisco().name() : null,
                 r.getDescricaoRisco(),
