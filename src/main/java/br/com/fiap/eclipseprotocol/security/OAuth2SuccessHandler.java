@@ -58,7 +58,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String token = tokenService.gerarToken(usuario);
 
-        String mobileRedirect = request.getParameter("mobile_redirect");
+        String mobileRedirect = (String) request.getSession().getAttribute("mobile_redirect");
+        request.getSession().removeAttribute("mobile_redirect");
 
         String redirectUrl;
         if (mobileRedirect != null && !mobileRedirect.isBlank()) {
