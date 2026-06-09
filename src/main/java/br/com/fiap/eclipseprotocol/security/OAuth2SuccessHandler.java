@@ -58,7 +58,5 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String token = tokenService.gerarToken(usuario);
         response.sendRedirect("eclipseprotocolmobile://token=" + token);
-
-        response.sendRedirect("/swagger-ui/index.html?token=" + token);
     }
 }
