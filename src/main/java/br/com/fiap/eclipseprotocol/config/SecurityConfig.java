@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/h2-console/**",
                                 "/auth/login",
+                                "/auth/github",
                                 "/login/**",
                                 "/oauth2/**"
                         ).permitAll()
