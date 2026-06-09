@@ -57,6 +57,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 ));
 
         String token = tokenService.gerarToken(usuario);
-        response.sendRedirect("eclipseprotocolmobile://token=" + token);
+
+        String mobileRedirect = request.getParameter("mobile_redirect");
+
+        String redirectUrl;
+        if (mobileRedirect != null && !mobileRedirect.isBlank()) {
+            String base = mobileRedirect.endsWith("/")
+                    ? mobileRedirect.substring(0, mobileRedirect.length() - 1)
+                    : mobileRedirect;
+            redirectUrl = base + "?token=" + token;
+        } else {
+            redirectUrl = "eclipseprotocolmobile://token=" + token;
+        }
+
+        response.sendRedirect(redirectUrl);
     }
 }
